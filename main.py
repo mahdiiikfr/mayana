@@ -10,7 +10,7 @@ from db.connection import DatabaseManager
 from middlewares.logging import LoggingMiddleware
 from middlewares.database import DatabaseMiddleware
 from middlewares.i18n import I18nMiddleware
-from handlers import start, menu
+from handlers import start, menu, vps
 
 # Setup basic logging
 logging.basicConfig(
@@ -47,6 +47,7 @@ async def main() -> None:
     # Register Handler Routers
     dp.include_router(start.router)
     dp.include_router(menu.router)
+    dp.include_router(vps.router)
 
     # Clean shutdown hook to close SQLite connection
     async def on_shutdown() -> None:
