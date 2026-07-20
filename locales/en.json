@@ -1,0 +1,12 @@
+{
+  "welcome": "Hello! Welcome to the HostVDS Cloud VPS Management Bot.\nPlease select one of the options below to manage your servers or top up your wallet.",
+  "main_menu": "Main Menu",
+  "manage_vps": "🖥 Manage Servers (VPS)",
+  "wallet": "💳 Wallet & Credit",
+  "insufficient_balance": "❌ Your wallet balance is insufficient! The minimum balance required to create a new server is $0.5.",
+  "select_language": "Please select your preferred language:\n\nلطفاً زبان مورد نظر خود را انتخاب کنید:",
+  "back_button": "🔙 Back",
+  "phone_verification": "📱 Phone Verification",
+  "vps_created_success": "✅ Your server has been successfully created!",
+  "vps_creation_failed": "❌ Server creation failed."
+}
