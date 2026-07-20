@@ -10,7 +10,8 @@ from db.connection import DatabaseManager
 from middlewares.logging import LoggingMiddleware
 from middlewares.database import DatabaseMiddleware
 from middlewares.i18n import I18nMiddleware
-from handlers import start, menu, vps, wallet
+from middlewares.throttling import ThrottlingMiddleware
+from handlers import start, menu, vps, wallet, admin
 from services.scheduler import BillingScheduler
 
 # Setup basic logging
@@ -40,8 +41,9 @@ async def main() -> None:
     logger.info("Running database initializations / migrations...")
     await db_manager.init_db()
 
-    # Register Middlewares (Order of execution: Logging -> Database -> I18n)
+    # Register Middlewares (Order of execution: Logging -> Throttling -> Database -> I18n)
     dp.update.outer_middleware(LoggingMiddleware())
+    dp.update.outer_middleware(ThrottlingMiddleware(limit=2.0))
     dp.update.outer_middleware(DatabaseMiddleware(db_manager))
     dp.update.outer_middleware(I18nMiddleware(locales_dir="locales", default_locale=settings.DEFAULT_LOCALE))
 
@@ -50,6 +52,7 @@ async def main() -> None:
     dp.include_router(menu.router)
     dp.include_router(vps.router)
     dp.include_router(wallet.router)
+    dp.include_router(admin.router)
 
     # Instantiate and start the background billing scheduler
     billing_scheduler = BillingScheduler(db_manager=db_manager, bot=bot)
