@@ -12,17 +12,18 @@ class UserRepository(BaseRepository):
         """
         Retrieves user information by their Telegram User ID.
         """
-        query = "SELECT user_id, username, language_code, phone_number, is_verified, created_at FROM users WHERE user_id = ?;"
+        query = "SELECT user_id, username, full_name, language_code, phone_number, is_verified, created_at FROM users WHERE user_id = ?;"
         async with self.connection.execute(query, (user_id,)) as cursor:
             row = await cursor.fetchone()
             if row:
                 return {
                     "user_id": row[0],
                     "username": row[1],
-                    "language_code": row[2],
-                    "phone_number": row[3],
-                    "is_verified": bool(row[4]),
-                    "created_at": row[5]
+                    "full_name": row[2],
+                    "language_code": row[3],
+                    "phone_number": row[4],
+                    "is_verified": bool(row[5]),
+                    "created_at": row[6]
                 }
             return None
 
@@ -30,6 +31,7 @@ class UserRepository(BaseRepository):
         self,
         user_id: int,
         username: Optional[str] = None,
+        full_name: Optional[str] = None,
         language_code: str = 'fa'
     ) -> Dict[str, Any]:
         """
@@ -40,10 +42,10 @@ class UserRepository(BaseRepository):
             return existing_user
 
         query = """
-        INSERT INTO users (user_id, username, language_code)
-        VALUES (?, ?, ?)
+        INSERT INTO users (user_id, username, full_name, language_code)
+        VALUES (?, ?, ?, ?)
         """
-        await self.connection.execute(query, (user_id, username, language_code))
+        await self.connection.execute(query, (user_id, username, full_name, language_code))
         await self.connection.commit()
 
         return await self.get_user(user_id)

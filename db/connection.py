@@ -53,6 +53,7 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,          -- Telegram User ID
             username TEXT,                        -- Telegram Username
+            full_name TEXT,                       -- Telegram Full Name
             language_code TEXT DEFAULT 'fa',      -- Language selection (e.g., 'fa', 'en')
             phone_number TEXT,                    -- Verified Phone Number
             is_verified INTEGER DEFAULT 0,        -- Verification status (0 = false, 1 = true)
@@ -82,6 +83,7 @@ class DatabaseManager:
             balance_after REAL DEFAULT 0.0,       -- Balance after the transaction
             transaction_type TEXT NOT NULL,       -- 'charge' or 'deduction'
             amount REAL NOT NULL,                 -- Transaction amount
+            description TEXT,                     -- Transaction description / memo
             status TEXT DEFAULT 'COMPLETED',      -- 'PENDING', 'COMPLETED', 'FAILED'
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE

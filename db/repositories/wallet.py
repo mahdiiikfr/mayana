@@ -32,6 +32,7 @@ class WalletRepository(BaseRepository):
         user_id: int,
         amount: float,
         transaction_type: str,  # 'charge' or 'deduction'
+        description: Optional[str] = None,
         status: str = "COMPLETED"
     ) -> Dict[str, Any]:
         """
@@ -52,12 +53,12 @@ class WalletRepository(BaseRepository):
             balance_after = current_balance
 
         query = """
-        INSERT INTO wallet (user_id, balance_after, transaction_type, amount, status)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO wallet (user_id, balance_after, transaction_type, amount, description, status)
+        VALUES (?, ?, ?, ?, ?, ?);
         """
         async with self.connection.execute(
             query,
-            (user_id, balance_after, transaction_type, amount, status)
+            (user_id, balance_after, transaction_type, amount, description, status)
         ) as cursor:
             transaction_id = cursor.lastrowid
             await self.connection.commit()
@@ -68,15 +69,39 @@ class WalletRepository(BaseRepository):
                 "balance_after": balance_after,
                 "transaction_type": transaction_type,
                 "amount": amount,
+                "description": description,
                 "status": status
             }
+
+    async def update_balance(self, user_id: int, amount: float) -> float:
+        """
+        Modifies a user's net balance.
+        If amount is positive, performs a 'charge' transaction.
+        If amount is negative, performs a 'deduction' transaction.
+        Returns the new wallet balance.
+        """
+        if amount >= 0:
+            tx = await self.add_transaction(
+                user_id=user_id,
+                amount=amount,
+                transaction_type="charge",
+                description="Manual system balance adjustment (addition)"
+            )
+        else:
+            tx = await self.add_transaction(
+                user_id=user_id,
+                amount=abs(amount),
+                transaction_type="deduction",
+                description="Manual system balance adjustment (deduction)"
+            )
+        return tx["balance_after"]
 
     async def get_user_transactions(self, user_id: int, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Retrieves historical transaction log entries for a user.
         """
         query = """
-        SELECT transaction_id, user_id, balance_after, transaction_type, amount, status, created_at
+        SELECT transaction_id, user_id, balance_after, transaction_type, amount, description, status, created_at
         FROM wallet
         WHERE user_id = ?
         ORDER BY transaction_id DESC
@@ -92,7 +117,8 @@ class WalletRepository(BaseRepository):
                     "balance_after": row[2],
                     "transaction_type": row[3],
                     "amount": row[4],
-                    "status": row[5],
-                    "created_at": row[6]
+                    "description": row[5],
+                    "status": row[6],
+                    "created_at": row[7]
                 })
             return transactions
