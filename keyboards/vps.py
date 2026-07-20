@@ -6,11 +6,25 @@ from typing import List, Dict, Any
 def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     """
     Builds an inline keyboard representing available network locations.
+    Filters out networks with 'RESERVE' or 'NOTWORKING' in their names, and sorts alphabetically.
     """
     builder = InlineKeyboardBuilder()
+
+    filtered_networks = []
     for net in networks:
         name = net.get("Name", net.get("name", "Unknown Network"))
         net_id = net.get("ID", net.get("id", ""))
+
+        # Check for reservation or non-functional keywords
+        upper_name = name.upper()
+        if "RESERVE" in upper_name or "NOTWORKING" in upper_name:
+            continue
+        filtered_networks.append((name, net_id))
+
+    # Sort alphabetically by network name
+    filtered_networks.sort(key=lambda x: x[0].lower())
+
+    for name, net_id in filtered_networks:
         builder.button(text=f"🌐 {name}", callback_data=f"buy_net:{net_id}")
 
     builder.button(text="❌ Cancel", callback_data="buy_cancel")

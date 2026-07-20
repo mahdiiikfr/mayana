@@ -1,5 +1,6 @@
 import logging
-from typing import Callable, Any, Dict
+import json
+from typing import Callable, Any, Dict, Optional
 from datetime import datetime, timedelta
 
 from aiogram import Router, F
@@ -20,6 +21,42 @@ from keyboards.vps import (
 logger = logging.getLogger(__name__)
 router = Router(name="vps")
 openstack = OpenStackService()
+
+
+def extract_ip_address(addresses: Any) -> str:
+    """
+    Helper function to safely extract a clean IPv4 address from various OpenStack response formats.
+    e.g., if addresses is:
+      - A dictionary like {"Internet-12": [{"addr": "192.168.1.1"}]}
+      - A string like "Internet-12=192.168.1.1"
+      - A list or any other type.
+    """
+    if not addresses:
+        return ""
+
+    if isinstance(addresses, dict):
+        # Format: {"Internet-12": [{"addr": "192.168.1.1"}]}
+        for net_name, net_details in addresses.items():
+            if isinstance(net_details, list):
+                for detail in net_details:
+                    if isinstance(detail, dict) and "addr" in detail:
+                        return str(detail["addr"])
+        return json.dumps(addresses)
+
+    if isinstance(addresses, list):
+        # Format: [{"addr": "192.168.1.1"}]
+        for detail in addresses:
+            if isinstance(detail, dict) and "addr" in detail:
+                return str(detail["addr"])
+        return json.dumps(addresses)
+
+    # If it is a string already, try to parse potential structures or return directly
+    addr_str = str(addresses)
+    # Check if there is an '=' sign common in some openstack show server responses, e.g. "Internet-12=192.168.1.1"
+    if "=" in addr_str:
+        return addr_str.split("=")[-1].strip()
+
+    return addr_str
 
 
 # --- MY VPS / LISTING ACTIVE INSTANCES ---
@@ -55,7 +92,7 @@ async def cmd_my_vps(message: Message, db: DatabaseManager, locale: str) -> None
     for vps in vps_list:
         uuid = vps["openstack_uuid"]
         live_status = vps["status"]
-        ip = vps["ip_address"] or "Under Provisioning..."
+        ip = extract_ip_address(vps["ip_address"]) or "Under Provisioning..."
 
         try:
             # Query live OpenStack status
@@ -63,6 +100,11 @@ async def cmd_my_vps(message: Message, db: DatabaseManager, locale: str) -> None
             if details:
                 # Extract actual status
                 live_status = details.get("status", details.get("Status", vps["status"]))
+                # If IP address was updated, extract and update it
+                live_ip_raw = details.get("addresses", details.get("IP", details.get("addresses", "")))
+                live_ip = extract_ip_address(live_ip_raw)
+                if live_ip:
+                    ip = live_ip
                 # Save status update locally in database for synchronization
                 await db.vps.update_vps_status(uuid, live_status)
         except Exception:
@@ -136,6 +178,8 @@ async def process_server_control(callback: CallbackQuery, db: DatabaseManager, l
         elif action == "vps_refresh":
             details = await openstack.get_server_details(uuid)
             live_status = details.get("status", details.get("Status", "ACTIVE"))
+            live_ip_raw = details.get("addresses", details.get("IP", details.get("addresses", "")))
+            live_ip = extract_ip_address(live_ip_raw)
             await db.vps.update_vps_status(uuid, live_status)
 
             # Edit text to reflect updated status
@@ -144,7 +188,7 @@ async def process_server_control(callback: CallbackQuery, db: DatabaseManager, l
 
             # Re-fetch local data to reconstruct message
             vps = await db.vps.get_vps_by_uuid(uuid)
-            ip = vps["ip_address"] or "Provisioning..."
+            ip = live_ip or extract_ip_address(vps["ip_address"]) or "Provisioning..."
             if locale == "fa":
                 updated_text = (
                     f"🖥 **نام سرور: {vps['server_name']}**\n\n"
@@ -325,9 +369,12 @@ async def process_confirm_purchase(callback: CallbackQuery, db: DatabaseManager,
 
         # Register server locally
         expires = datetime.now() + timedelta(days=30)
-        # Sometime CLI returns access addresses directly, else fetch via show details
-        ip_addr = result.get("addresses", result.get("IP", "Retrieving IP..."))
 
+        # Sometime CLI returns access addresses directly, extract safely to pure string
+        ip_addr_raw = result.get("addresses", result.get("IP", ""))
+        ip_addr = extract_ip_address(ip_addr_raw) or "Retrieving IP..."
+
+        # Save to database (the repository already serializes flavor and ip_address to pure string)
         await db.vps.add_vps(
             user_id=user_id,
             openstack_uuid=uuid,

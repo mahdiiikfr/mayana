@@ -1,4 +1,5 @@
 import aiosqlite
+import json
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from db.base import BaseRepository
@@ -14,21 +15,33 @@ class VPSRepository(BaseRepository):
         user_id: int,
         openstack_uuid: str,
         server_name: str,
-        ip_address: Optional[str] = None,
-        flavor: Optional[str] = None,
+        ip_address: Optional[Any] = None,
+        flavor: Optional[Any] = None,
         status: str = "ACTIVE",
         expires_at: Optional[datetime] = None
     ) -> Dict[str, Any]:
         """
         Saves a newly created OpenStack VPS instance details into the database.
+        Ensures complex parameters like lists/dicts are serialized to strings before storing.
         """
+        # Secure serialization of any dictionary/list parameters
+        if isinstance(ip_address, (dict, list)):
+            ip_address_str = json.dumps(ip_address)
+        else:
+            ip_address_str = str(ip_address) if ip_address is not None else None
+
+        if isinstance(flavor, (dict, list)):
+            flavor_str = json.dumps(flavor)
+        else:
+            flavor_str = str(flavor) if flavor is not None else None
+
         query = """
         INSERT INTO vps (user_id, openstack_uuid, server_name, ip_address, flavor, status, expires_at)
         VALUES (?, ?, ?, ?, ?, ?, ?);
         """
         async with self.connection.execute(
             query,
-            (user_id, openstack_uuid, server_name, ip_address, flavor, status, expires_at)
+            (user_id, openstack_uuid, server_name, ip_address_str, flavor_str, status, expires_at)
         ) as cursor:
             vps_id = cursor.lastrowid
             await self.connection.commit()
