@@ -10,7 +10,8 @@ from db.connection import DatabaseManager
 from middlewares.logging import LoggingMiddleware
 from middlewares.database import DatabaseMiddleware
 from middlewares.i18n import I18nMiddleware
-from handlers import start, menu, vps
+from handlers import start, menu, vps, wallet
+from services.scheduler import BillingScheduler
 
 # Setup basic logging
 logging.basicConfig(
@@ -48,9 +49,20 @@ async def main() -> None:
     dp.include_router(start.router)
     dp.include_router(menu.router)
     dp.include_router(vps.router)
+    dp.include_router(wallet.router)
 
-    # Clean shutdown hook to close SQLite connection
+    # Instantiate and start the background billing scheduler
+    billing_scheduler = BillingScheduler(db_manager=db_manager, bot=bot)
+    billing_scheduler.start()
+
+    # Clean shutdown hook to close SQLite connection and scheduler safely
     async def on_shutdown() -> None:
+        logger.info("Stopping billing scheduler daemon...")
+        try:
+            billing_scheduler.shutdown()
+        except Exception as e:
+            logger.error(f"Error stopping scheduler: {e}")
+
         logger.info("Closing database connections...")
         await db_manager.disconnect()
         logger.info("Connections closed. Bot stopped.")
