@@ -1,0 +1,7 @@
+OpenStack Dashboard
+URL
+horizon.hostvds.com
+Login
+hostvds-bb9dd16b-878e-4c2c-b18b-9f4d51ef527f
+pass 
+_FmszeAelUUtmHl6YcvE8kl1I8w

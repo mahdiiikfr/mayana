@@ -1,0 +1,1428 @@
+
+ Search
+Software
+Use Cases
+Events
+Community
+Marketplace
+Blog
+Docs
+Join
+Log In
+OpenStack API Documentation
+  
+The Identity service generates authentication tokens that permit access to the OpenStack services REST APIs. Clients obtain this token and the URL endpoints for other service APIs by supplying their valid credentials to the authentication service.
+
+Each time you make a REST API request to an OpenStack service, you supply your authentication token in the X-Auth-Token request header.
+
+Like most OpenStack projects, OpenStack Identity protects its APIs by defining policy rules based on a role-based access control (RBAC) approach.
+
+The Identity service configuration file sets the name and location of a JSON policy file that stores these rules.
+
+Note that the V3 API implements HEAD for all GET requests. Each HEAD request contains the same headers and HTTP status code as the corresponding GET API.
+
+For information about Identity API protection, see Identity API protection with role-based access control (RBAC) in the OpenStack Cloud Administrator Guide.
+
+What’s New in Version 3.14 (Ussuri)
+New attribute authorization_ttl for identity providers
+
+New attribute membership_expires_at when listing groups for a user
+
+Ability to persist group memberships carried through mapping for a federated user
+
+Added the ability to create, update and delete federated attributes for a user
+
+What’s New in Version 3.13 (Train)
+New parameter access_rules for application credentials
+
+New read-only API /v3/users/{user_id}/access_rules for viewing access rules
+
+What’s New in Version 3.12 (Stein)
+New optional multi-factor auth process involving auth receipts
+
+What’s New in Version 3.11 (Rocky)
+New endpoint /v3/limits-model for discovering the limit model in effect
+
+New description field in registered and project limits
+
+New project_id filters for project limits
+
+New parameter include_limits for project detail query
+
+What’s New in Version 3.10 (Queens)
+Introduction of the Application Credentials API.
+
+Introduction of an experimental Unified Limits API.
+
+Ability to grant system role assignments and obtain system-scoped tokens.
+
+What’s New in Version 3.9 (Queens)
+Addition of tags attribute to project.
+
+New APIs to interact with the tags attribute.
+
+What’s New in Version 3.8 (Ocata)
+Allow a service user to fetch a token that has expired.
+
+Add a password_expires_at query parameter to user list and users in group list.
+
+What’s New in Version 3.7 (Newton)
+Addition of the password_expires_at field to the user response object.
+
+Introduce a flag to bypass expiration and revocation checking.
+
+What’s New in Version 3.6 (Mitaka)
+Listing role assignments for a tree of projects.
+
+Setting the project is_domain attribute enables a project to behave as a domain.
+
+Addition of the is_domain field to project scoped token response that represents whether a project is acting as a domain.
+
+Enable or disable a subtree in the project hierarchy.
+
+Delete a subtree in the project hierarchy.
+
+Additional identifier for tokens scoped to the designated admin project.
+
+Addition of domain_id filter to list user projects
+
+One role can imply another via role_inference rules.
+
+Enhance list role assignment to optionally provide names of entities.
+
+The defaults for domain-specific configuration options can be retrieved.
+
+Assignments can be specified as inherited, causing the assignment to be placed on any sub-projects.
+
+Support for domain specific roles.
+
+Support enabled and id as optional attributes to filter identity providers when listing.
+
+What’s New in Version 3.5 (Liberty)
+Addition of type optional attribute to list credentials.
+
+Addition of region_id optional attribute to list endpoints.
+
+Addition of is_domain optional attribute to projects. Setting this currently has no effect, it is reserved for future use.
+
+What’s New in Version 3.4 (Kilo)
+For tokenless authorization, the scope information may be set in the request headers.
+
+Addition of parent_id optional attribute to projects. This enables the construction of a hierarchy of projects.
+
+Addition of domain specific configuration management for a domain entity.
+
+Removal of url optional attribute for regions. This attribute was only used for the experimental phase of keystone-to-keystone federation and has been superseded by making service provider entries have its own entry in the service catalog.
+
+The JSON Home support now will indicate the status of resource if it is not stable and current.
+
+What’s New in Version 3.3 (Juno)
+These features are considered stable as of September 4th, 2014.
+
+Addition of name optional variable to be included from service definition into the service catalog.
+
+Introduced a stand alone call to retrieve a service catalog.
+
+Introduced support for JSON Home.
+
+Introduced a standard call to retrieve possible project and domain scope targets for a token.
+
+Addition of url optional attribute for regions.
+
+What’s New in Version 3.2 (Icehouse)
+These features are considered stable as of January 23, 2014.
+
+Introduced a mechanism to opt-out from catalog information during token validation
+
+Introduced a region resource for constructing a hierarchical container of groups of service endpoints
+
+Inexact filtering is supported on string attributes
+
+Listing collections may indicate only a subset of the data has been provided if a particular deployment has limited the number of entries a query may return
+
+What’s New in Version 3.1 (Havana)
+These features are considered stable as of July 18, 2013.
+
+A token without an explicit scope of authorization is issued if the user does not specify a project and does not have authorization on the project specified by their default project attribute
+
+Introduced a generalized call for getting role assignments, with filtering for user, group, project, domain and role
+
+Introduced a mechanism to opt-out from catalog information during token creation
+
+Added optional bind information to token structure
+
+What’s New in Version 3.0 (Grizzly)
+These features are considered stable as of February 20, 2013.
+
+Former “Service” and “Admin” APIs (including CRUD operations previously defined in the v2 OS-KSADM extension) are consolidated into a single core API
+
+“Tenants” are now known as “projects”
+
+“Groups”: a container representing a collection of users
+
+“Domains”: a high-level container for projects, users and groups
+
+“Policies”: a centralized repository for policy engine rule sets
+
+“Credentials”: generic credential storage per user (e.g. EC2, PKI, SSH, etc.)
+
+Roles can be granted at either the domain or project level
+
+User, group and project names only have to be unique within their owning domain
+
+Retrieving your list of projects (previously GET /tenants) is now explicitly based on your user ID: GET /users/{user_id}/projects
+
+Tokens explicitly represent user+project or user+domain pairs
+
+Partial updates are performed using the HTTP PATCH method
+
+Token ID values no longer appear in URLs
+
+Relationships
+The entries within the operations below contain a relationship link, which appears as a valid URI, however these are actually URN (Uniform Resource Name), which are similar to GUID except it uses a URI syntax so that it is easier to be read. These links do not resolve to anything valid, but exist to show a relationship.
+
+Identity API Operations
+This page lists the Identity API operations in the following order:
+
+Authentication and token management
+
+Application Credentials
+
+Credentials
+
+Domains
+
+Domain configuration
+
+Groups
+
+Policies
+
+Projects
+
+Project Tags
+
+Regions
+
+Roles
+
+System Role Assignments
+
+Service catalog and endpoints
+
+Unified Limits
+
+Users
+
+OS-INHERIT
+
+OS-PKI (DEPRECATED)
+
+Authentication and token management
+The Identity service generates tokens in exchange for authentication credentials. A token represents the authenticated identity of a user and, optionally, grants authorization on a specific project, domain, or the deployment system.
+
+The body of an authentication request must include a payload that specifies the authentication methods, which are normally just password or token, the credentials, and, optionally, the authorization scope. You can scope a token to a project, domain, the deployment system, or the token can be unscoped. You cannot scope a token to multiple scope targets.
+
+Tokens have IDs, which the Identity API returns in the X-Subject-Token response header.
+
+In the case of multi-factor authentication (MFA) more than one authentication method needs to be supplied to authenticate. As of v3.12 a failure due to MFA rules only partially being met will result in an auth receipt ID being returned in the response header Openstack-Auth-Receipt, and a response body that details the receipt itself and the missing authentication methods. Supplying the auth receipt ID in the Openstack-Auth-Receipt header in a follow-up authentication request, with the missing authentication methods, will result in a valid token by reusing the successful methods from the first request. This allows MFA authentication to be a multi-step process.
+
+After you obtain an authentication token, you can:
+
+Make REST API requests to other OpenStack services. You supply the ID of your authentication token in the X-Auth-Token request header.
+
+Validate your authentication token and list the domains, projects, roles, and endpoints that your token gives you access to.
+
+Use your token to request another token scoped for a different domain and project.
+
+Force the immediate revocation of a token.
+
+List revoked public key infrastructure (PKI) tokens.
+
+In v3.7 of the Identity API service, two new configuration options were added: [resource] admin_project_name and [resource] admin_project_domain_name. The options represent the project that only the cloud administrator should be able to access. When an authentication request for a token scoped to the admin project is processed, it will have an additional field in the token {is_admin_project: True}. The additional field can be used when writing policy rules that evaluate access control to APIs.
+
+Alternatively, in v3.10 the Identity API service introduced the concept of system role assignments and system-scoped tokens. APIs that affect the deployment system require system-scoped tokens.
+
+The Identity API considers expired tokens as invalid, which is determined by the deployment’s configuration.
+
+These authentication errors can occur:
+
+Authentication errors
+
+Response code
+
+Description
+
+Bad Request (400)
+
+The Identity service failed to parse the request as expected. One of the following errors occurred:
+
+A required attribute was missing.
+
+An attribute that is not allowed was specified, such as an ID on a POST request in a basic CRUD operation.
+
+An attribute of an unexpected data type was specified.
+
+Unauthorized (401)
+
+One of the following errors occurred:
+
+Authentication was not performed.
+
+The specified X-Auth-Token header is not valid.
+
+The authentication credentials are not valid.
+
+Not all MFA rules were satisfied.
+
+The specified Openstack-Auth-Receipt header is not valid.
+
+Forbidden (403)
+
+The identity was successfully authenticated but it is not authorized to perform the requested action.
+
+Not Found (404)
+
+An operation failed because a referenced entity cannot be found by ID. For a POST request, the referenced entity might be specified in the request body rather than in the resource path.
+
+Conflict (409)
+
+A POST or PATCH operation failed. For example, a client tried to update a unique attribute for an entity, which conflicts with that of another entity in the same collection.
+
+Or, a client issued a create operation twice on a collection with a user-defined, unique attribute. For example, a client made a POST /users request two times for the unique, user-defined name attribute for a user entity.
+
+ POST
+/v3/auth/tokens
+Password authentication with unscoped authorization
+
+ POST
+/v3/auth/tokens
+Password authentication with scoped authorization
+
+ POST
+/v3/auth/tokens
+Password authentication with explicit unscoped authorization
+
+ POST
+/v3/auth/tokens
+Token authentication with unscoped authorization
+
+ POST
+/v3/auth/tokens
+Token authentication with scoped authorization
+
+ POST
+/v3/auth/tokens
+Token authentication with explicit unscoped authorization
+
+ POST
+/v3/auth/tokens
+Multi-Step authentication (2-Factor Password and TOTP example)
+
+ GET
+/v3/auth/tokens
+Validate and show information for token
+
+ HEAD
+/v3/auth/tokens
+Check token
+
+ DELETE
+/v3/auth/tokens
+Revoke token
+
+ GET
+/v3/auth/catalog
+Get service catalog
+
+ GET
+/v3/auth/projects
+Get available project scopes
+
+ GET
+/v3/auth/domains
+Get available domain scopes
+
+ GET
+/v3/auth/system
+Get available system scopes
+
+Application Credentials
+Application credentials provide a way to delegate a user’s authorization to an application without sharing the user’s password authentication. This is a useful security measure, especially for situations where the user’s identification is provided by an external source, such as LDAP or a single-sign-on service. Instead of storing user passwords in config files, a user creates an application credential for a specific project, with all or a subset of the role assignments they have on that project, and then stores the application credential identifier and secret in the config file.
+
+Multiple application credentials may be active at once, so you can easily rotate application credentials by creating a second one, converting your applications to use it one by one, and finally deleting the first one.
+
+Application credentials are limited by the lifespan of the user that created them. If the user is deleted, disabled, or loses a role assignment on a project, the application credential is deleted.
+
+Application credentials can have their privileges limited in two ways. First, the owner may specify a subset of their own roles that the application credential may assume when getting a token for a project. For example, if a user has the member role on a project, they also have the implied role reader and can grant the application credential only the reader role for the project:
+
+"roles": [
+    {"name": "reader"}
+]
+Users also have the option of delegating more fine-grained access control to their application credentials by using access rules. For example, to create an application credential that is constricted to creating servers in nova, the user can add the following access rules:
+
+"access_rules": [
+    {
+        "path": "/v2.1/servers",
+        "method": "POST",
+        "service": "compute"
+    }
+]
+The "path" attribute of application credential access rules uses a wildcard syntax to make it more flexible. For example, to create an application credential that is constricted to listing server IP addresses, you could use either of the following access rules:
+
+"access_rules": [
+    {
+        "path": "/v2.1/servers/*/ips",
+        "method": "GET",
+        "service": "compute"
+    }
+]
+or equivalently:
+
+"access_rules": [
+    {
+        "path": "/v2.1/servers/{server_id}/ips",
+        "method": "GET",
+        "service": "compute"
+    }
+]
+In both cases, a request path containing any server ID will match the access rule. For even more flexibility, the recursive wildcard ** indicates that request paths containing any number of / will be matched. For example:
+
+"access_rules": [
+    {
+        "path": "/v2.1/**",
+        "method": "GET",
+        "service": "compute"
+    }
+]
+will match any nova API for version 2.1.
+
+An access rule created for one application credential can be re-used by providing its ID to another application credential, for example:
+
+"access_rules": [
+    {
+        "id": "abcdef"
+    }
+]
+ POST
+/v3/auth/tokens
+Authenticating with an Application Credential
+
+ POST
+/v3/users/{user_id}/application_credentials
+Create application credential
+
+ GET
+/v3/users/{user_id}/application_credentials
+List application credentials
+
+ GET
+/v3/users/{user_id}/application_credentials/{application_credential_id}
+Show application credential details
+
+ DELETE
+/v3/users/{user_id}/application_credentials/{application_credential_id}
+Delete application credential
+
+ GET
+/v3/users/{user_id}/access_rules
+List access rules
+
+ GET
+/v3/users/{user_id}/access_rules/{access_rule_id}
+Show access rule details
+
+ DELETE
+/v3/users/{user_id}/access_rules/{access_rule_id}
+Delete access rule
+
+Credentials
+In exchange for a set of authentication credentials that the user submits, the Identity service generates and returns a token. A token represents the authenticated identity of a user and, optionally, grants authorization on a specific project or domain.
+
+You can list all credentials, and create, show details for, update, and delete a credential.
+
+ POST
+/v3/credentials
+Create credential
+
+ GET
+/v3/credentials
+List credentials
+
+ GET
+/v3/credentials/{credential_id}
+Show credential details
+
+ PATCH
+/v3/credentials/{credential_id}
+Update credential
+
+ DELETE
+/v3/credentials/{credential_id}
+Delete credential
+
+Domains
+A domain is a collection of users, groups, and projects. Each group and project is owned by exactly one domain.
+
+Each domain defines a namespace where certain API-visible name attributes exist, which affects whether those names must be globally unique or unique within that domain. In the Identity API, the uniqueness of these attributes is as follows:
+
+Domain name. Globally unique across all domains.
+
+Role name. Unique within the owning domain.
+
+User name. Unique within the owning domain.
+
+Project name. Unique within the owning domain.
+
+Group name. Unique within the owning domain.
+
+ GET
+/v3/domains
+List domains
+
+ POST
+/v3/domains
+Create domain
+
+ GET
+/v3/domains/{domain_id}
+Show domain details
+
+ PATCH
+/v3/domains/{domain_id}
+Update domain
+
+ DELETE
+/v3/domains/{domain_id}
+Delete domain
+
+Domain configuration
+You can manage domain-specific configuration options.
+
+Domain-specific configuration options are structured within their group objects. The API supports only the identity and ldap groups. These groups override the default configuration settings for the storage of users and groups by the Identity server.
+
+You can create, update, and delete domain-specific configuration options by using the HTTP PUT , PATCH , and DELETE methods. When updating, it is only necessary to include those options that are being updated.
+
+To create an option, use the PUT method. The Identity API does not return options that are considered sensitive, although you can create and update these options. The only option currently considered sensitive is the password option within the ldap group.
+
+The API enables you to include sensitive options as part of non- sensitive options. For example, you can include the password as part of the url option.
+
+If you try to create or update configuration options for groups other than the identity or ldap groups, the Forbidden (403) response code is returned.
+
+For information about how to integrate the Identity service with LDAP, see Integrate Identity with LDAP.
+
+ GET
+/v3/domains/config/default
+Show default configuration settings
+
+ GET
+/v3/domains/config/{group}/default
+Show default configuration for a group
+
+ GET
+/v3/domains/config/{group}/{option}/default
+Show default option for a group
+
+ GET
+/v3/domains/{domain_id}/config/{group}/{option}
+Show domain group option configuration
+
+ PATCH
+/v3/domains/{domain_id}/config/{group}/{option}
+Update domain group option configuration
+
+ DELETE
+/v3/domains/{domain_id}/config/{group}/{option}
+Delete domain group option configuration
+
+ GET
+/v3/domains/{domain_id}/config/{group}
+Show domain group configuration
+
+ PATCH
+/v3/domains/{domain_id}/config/{group}
+Update domain group configuration
+
+ DELETE
+/v3/domains/{domain_id}/config/{group}
+Delete domain group configuration
+
+ PUT
+/v3/domains/{domain_id}/config
+Create domain configuration
+
+ GET
+/v3/domains/{domain_id}/config
+Show domain configuration
+
+ PATCH
+/v3/domains/{domain_id}/config
+Update domain configuration
+
+ DELETE
+/v3/domains/{domain_id}/config
+Delete domain configuration
+
+Groups
+A group is a collection of users. Each group is owned by a domain.
+
+You can use groups to ease the task of managing role assignments for users. Assigning a role to a group on a project or domain is equivalent to assigning the role to each group member on that project or domain.
+
+When you unassign a role from a group, that role is automatically unassigned from any user that is a member of the group. Any tokens that authenticates those users to the relevant project or domain are revoked.
+
+As with users, a group without any role assignments is useless from the perspective of an OpenStack service and has no access to resources. However, a group without role assignments is permitted as a way of acquiring or loading users and groups from external sources before mapping them to projects and domains.
+
+ GET
+/v3/groups
+List groups
+
+ POST
+/v3/groups
+Create group
+
+ GET
+/v3/groups/{group_id}
+Show group details
+
+ PATCH
+/v3/groups/{group_id}
+Update group
+
+ DELETE
+/v3/groups/{group_id}
+Delete group
+
+ GET
+/v3/groups/{group_id}/users
+List users in group
+
+ PUT
+/v3/groups/{group_id}/users/{user_id}
+Add user to group
+
+ HEAD
+/v3/groups/{group_id}/users/{user_id}
+Check whether user belongs to group
+
+ DELETE
+/v3/groups/{group_id}/users/{user_id}
+Remove user from group
+
+OS-INHERIT
+Enables projects to inherit role assignments from either their owning domain or projects that are higher in the hierarchy.
+
+(Since API v3.4) The OS-INHERIT extension allows inheritance from both projects and domains. To access project inheritance, the Identity service server must run at least API v3.4.
+
+ PUT
+/v3/OS-INHERIT/domains/{domain_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Assign role to user on projects owned by domain
+
+ PUT
+/v3/OS-INHERIT/domains/{domain_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Assign role to group on projects owned by a domain
+
+ GET
+/v3/OS-INHERIT/domains/{domain_id}/users/{user_id}/roles/inherited_to_projects
+List user’s inherited project roles on a domain
+
+ GET
+/v3/OS-INHERIT/domains/{domain_id}/groups/{group_id}/roles/inherited_to_projects
+List group’s inherited project roles on domain
+
+ HEAD
+/v3/OS-INHERIT/domains/{domain_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Check if user has an inherited project role on domain
+
+ HEAD
+/v3/OS-INHERIT/domains/{domain_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Check if group has an inherited project role on domain
+
+ DELETE
+/v3/OS-INHERIT/domains/{domain_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Revoke an inherited project role from user on domain
+
+ DELETE
+/v3/OS-INHERIT/domains/{domain_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Revoke an inherited project role from group on domain
+
+ PUT
+/v3/OS-INHERIT/projects/{project_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Assign role to user on projects in a subtree
+
+ PUT
+/v3/OS-INHERIT/projects/{project_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Assign role to group on projects in a subtree
+
+ HEAD
+/v3/OS-INHERIT/projects/{project_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Check if user has an inherited project role on project
+
+ HEAD
+/v3/OS-INHERIT/projects/{project_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Check if group has an inherited project role on project
+
+ DELETE
+/v3/OS-INHERIT/projects/{project_id}/users/{user_id}/roles/{role_id}/inherited_to_projects
+Revoke an inherited project role from user on project
+
+ DELETE
+/v3/OS-INHERIT/projects/{project_id}/groups/{group_id}/roles/{role_id}/inherited_to_projects
+Revoke an inherited project role from group on project
+
+ GET
+/v3/role_assignments
+List role assignments
+
+OS-PKI (DEPRECATED)
+ GET
+/v3/auth/tokens/OS-PKI/revoked
+List revoked tokens
+
+Policies
+ Warning
+
+The policies API is deprecated. Keystone is not a policy management service. Do not use this.
+
+A policy is an arbitrarily serialized policy engine rule set to be consumed by a remote service.
+
+You encode policy rule sets into a blob that remote services can consume. To do so, set type to application/json and specify policy rules as JSON strings in a blob. For example:
+
+{
+    "blob":{
+        "foobar_user":[
+            "role:compute-user"
+        ]
+    }
+}
+ POST
+/v3/policies
+Create policy
+
+ GET
+/v3/policies
+List policies
+
+ GET
+/v3/policies/{policy_id}
+Show policy details
+
+ PATCH
+/v3/policies/{policy_id}
+Update policy
+
+ DELETE
+/v3/policies/{policy_id}
+Delete policy
+
+Projects
+A project is the base unit of resource ownership. Resources are owned by a specific project. A project is owned by a specific domain.
+
+(Since Identity API v3.4) You can create a hierarchy of projects by setting a parent_id when you create a project. All projects in a hierarchy must be owned by the same domain.
+
+(Since Identity API v3.6) Projects may, in addition to acting as containers for OpenStack resources, act as a domain (by setting the attribute is_domain to true), in which case it provides a namespace in which users, groups and other projects can be created. In fact, a domain created using the POST /domains API will actually be represented as a project with is_domain set to true with no parent (parent_id is null).
+
+Given this, all projects are considered part of a project hierarchy. Projects created in a domain prior to v3.6 are represented as a two-level hierarchy, with a project that has is_domain set to true as the root and all other projects referencing the root as their parent.
+
+A project acting as a domain can potentially also act as a container for OpenStack resources, although this depends on whether the policy rule for the relevant resource creation allows this.
+
+ Note
+
+A project’s name must be unique within a domain and no more than 64 characters. A project’s name must be able to be sent within valid JSON, which could be any UTF-8 character. However, this is constrained to the given backend where project names are stored. For instance, MySQL’s restrictions states that UTF-8 support is constrained to the characters in the Basic Multilingual Plane (BMP). Supplementary characters are not permitted. Note that this last restriction is generally true for all names within resources of the Identity API. Creating a project without using a domain scoped token, i.e. using a project scoped token or a system scoped token, and also without specifying a domain or domain_id, the project will automatically be created on the default domain.
+
+ GET
+/v3/projects
+List projects
+
+ POST
+/v3/projects
+Create project
+
+ GET
+/v3/projects/{project_id}
+Show project details
+
+ PATCH
+/v3/projects/{project_id}
+Update project
+
+ DELETE
+/v3/projects/{project_id}
+Delete project
+
+Project tags
+Projects within keystone can be tagged with one to many simple strings. Tags for projects follow the guidelines for resource tags set by the API Working Group.
+
+Tags for projects have the following restrictions:
+
+ Note
+
+Tags are case sensitive
+
+Forward Slash ‘/’ is not allowed to be in a tag name
+
+Commas ‘,’ are not allowed to be in a tag name in order to simplify requests that specify lists of tags
+
+Each project can have a maximum of 80 tags
+
+Each tag can be a maximum of 255 characters in length
+
+ Warning
+
+We discourage the use of project tags for sensitive information like billing or account codes. By default, access to project tags isn’t exclusive to system administrators or users. Domain and project administrators are allowed to tag projects they have authorization to access. Domain and project users (e.g., users with the member or reader roles) can view all project tags on all projects within their domain or on projects they are authorized to access.
+
+ GET
+/v3/projects/{project_id}/tags
+List tags for a project
+
+ PUT
+/v3/projects/{project_id}/tags
+Modify tag list for a project
+
+ DELETE
+/v3/projects/{project_id}/tags
+Remove all tags from a project
+
+ GET
+/v3/projects/{project_id}/tags/{tag}
+Check if project contains tag
+
+ PUT
+/v3/projects/{project_id}/tags/{tag}
+Add single tag to a project
+
+ DELETE
+/v3/projects/{project_id}/tags/{tag}
+Delete single tag from project
+
+Filtering and searching by tags
+Projects can be searched or filtered by tags. The following table and examples define how to filter projects by tags. Filters can also be combined for more complex searching.
+
+Tag Query
+
+Description
+
+tags
+
+Projects that contain all of the specified tags
+
+tags-any
+
+Projects that contain at least one of the specified tags
+
+not-tags
+
+Projects that do not contain exactly all of the specified tags
+
+not-tags-any
+
+Projects that do not contain any one of the specified tags
+
+To request the list of projects that have a single tag, the tags query parameter should be set to the desired tag name. The following example returns projects with the “foo” tag:
+
+GET /v3/projects?tags=foo
+To request the list of projects that have two or more tags, the tags argument should be set to the list of tags, separated by commas. In this situation, the tags given must all be present for a project to be included in the query result. The following example returns projects that have the “foo” and “bar” tags:
+
+GET /v3/projects?tags=foo,bar
+To request the list of projects that have at least one tag from a given list, the tags-any argument should be set to the list of tags, separated by commas. In this situation as long as one of the given tags is present, the project will be included in the query result. The following example returns projects that have the “foo” OR “bar” tag:
+
+GET /v3/projects?tags-any=foo,bar
+To request the list of projects that do not have a list of tags, the not-tags argument should be set to the list of tags, separated by commas. In this situation, the tags given must all be absent for a project to be included in the query result. The following example returns projects that do not have the “foo” nor the “bar” tag:
+
+GET /v3/projects?not-tags=foo,bar
+To request the list of projects that do not have at least one of a list of tags, the not-tags-any argument should be set to the list of tags, separated by commas. In this situation, as long as one of the given tags is absent, the project will be included in the query result. Example The following example returns projects that do not have the “foo” tag or do not have the “bar” tag:
+
+GET /v3/projects?not-tags-any=foo,bar
+The tags, tags-any, not-tags and not-tags-any arguments can be combined to build more complex queries. The following example returns projects that have the “foo” and “bar” tags, plus at least one of “red” and “blue”:
+
+GET /v3/projects?tags=foo,bar&tags-any=red,blue
+Regions
+A region is a general division of an OpenStack deployment. You can associate zero or more sub-regions with a region to create a tree- like structured hierarchy.
+
+Although a region does not have a geographical connotation, a deployment can use a geographical name for a region ID, such as us- east.
+
+You can list, create, update, show details for, and delete regions.
+
+ GET
+/v3/regions/{region_id}
+Show region details
+
+ PATCH
+/v3/regions/{region_id}
+Update region
+
+ DELETE
+/v3/regions/{region_id}
+Delete region
+
+ GET
+/v3/regions
+List regions
+
+ POST
+/v3/regions
+Create region
+
+Roles
+OpenStack services typically determine whether a user’s API request should be allowed using Role Based Access Control (RBAC). For OpenStack this means the service compares the roles that user has on the project (as indicated by the roles in the token), against the roles required for the API in question (as defined in the service’s policy file). A user obtains roles on a project by having these assigned to them via the Identity service API.
+
+Roles must initially be created as entities via the Identity services API and, once created, can then be assigned. You can assign roles to a user or group on a project, including projects owned by other domains. You can also assign roles to a user or group on a domain, although this is only currently relevant for using a domain scoped token to execute domain-level Identity service API requests.
+
+The creation, checking and deletion of role assignments is done with each of the attributes being specified in the URL. For example to assign a role to a user on a project:
+
+PUT /v3/projects/{project_id}/users/{user_id}/roles/{role_id}
+You can also list roles assigned to the system, or to a specified domain, project, or user using this form of API, however a more generalized API for list assignments is provided where query parameters are used to filter the set of assignments returned in the collection. For example:
+
+List role assignments for the specified user:
+
+GET /role_assignments?user.id={user_id}
+List role assignments for the specified project:
+
+GET /role_assignments?scope.project.id={project_id}
+List system role assignments for a specific user:
+
+GET /role_assignments?scope.system=all?user.id={user_id}
+List system role assignments for all users and groups:
+
+GET /role_assignments?scope.system=all
+Since Identity API v3.10, you can grant role assignments to users and groups on an entity called the system. The role assignment API also supports listing and filtering role assignments on the system.
+
+Since Identity API v3.6, you can also list all role assignments within a tree of projects, for example the following would list all role assignments for a specified project and its sub-projects:
+
+GET /role_assignments?scope.project.id={project_id}&include_subtree=true
+If you specify include_subtree=true, you must also specify the scope.project.id. Otherwise, this call returns the Bad Request (400) response code.
+
+Each role assignment entity in the collection contains a link to the assignment that created the entity.
+
+As mentioned earlier, role assignments can be made to a user or a group on a particular project, domain, or the entire system. A user who is a member of a group that has a role assignment, will also be treated as having that role assignment by virtue of their group membership. The effective role assignments of a user (on a given project or domain) therefore consists of any direct assignments they have, plus any they gain by virtue of membership of groups that also have assignments on the given project or domain. This set of effective role assignments is what is placed in the token for reference by services wishing to check policy. You can list the effective role assignments using the effective query parameter at the user, project, and domain level:
+
+Determine what a user can actually do:
+
+GET /role_assignments?user.id={user_id}&effective
+Get the equivalent set of role assignments that are included in a project-scoped token response:
+
+GET /role_assignments?user.id={user_id}&scope.project.id={project_id}&effective
+When listing in effective mode, since the group assignments have been effectively expanded out into assignments for each user, the group role assignment entities themselves are not returned in the collection. However, in the response, the links entity section for each assignment gained by virtue of group membership will contain a URL that enables access to the membership of the group.
+
+By default only the IDs of entities are returned in collections from the role_assignment API calls. The names of entities may also be returned, in addition to the IDs, by using the include_names query parameter on any of these calls, for example:
+
+List role assignments including names:
+
+GET /role_assignments?include_names
+ GET
+/v3/roles
+List roles
+
+ POST
+/v3/roles
+Create role
+
+ GET
+/v3/roles/{role_id}
+Show role details
+
+ PATCH
+/v3/roles/{role_id}
+Update role
+
+ DELETE
+/v3/roles/{role_id}
+Delete role
+
+ GET
+/v3/domains/{domain_id}/groups/{group_id}/roles
+List role assignments for group on domain
+
+ PUT
+/v3/domains/{domain_id}/groups/{group_id}/roles/{role_id}
+Assign role to group on domain
+
+ HEAD
+/v3/domains/{domain_id}/groups/{group_id}/roles/{role_id}
+Check whether group has role assignment on domain
+
+ DELETE
+/v3/domains/{domain_id}/groups/{group_id}/roles/{role_id}
+Unassign role from group on domain
+
+ GET
+/v3/domains/{domain_id}/users/{user_id}/roles
+List role assignments for user on domain
+
+ PUT
+/v3/domains/{domain_id}/users/{user_id}/roles/{role_id}
+Assign role to user on domain
+
+ HEAD
+/v3/domains/{domain_id}/users/{user_id}/roles/{role_id}
+Check whether user has role assignment on domain
+
+ DELETE
+/v3/domains/{domain_id}/users/{user_id}/roles/{role_id}
+Unassigns role from user on domain
+
+ GET
+/v3/projects/{project_id}/groups/{group_id}/roles
+List role assignments for group on project
+
+ PUT
+/v3/projects/{project_id}/groups/{group_id}/roles/{role_id}
+Assign role to group on project
+
+ HEAD
+/v3/projects/{project_id}/groups/{group_id}/roles/{role_id}
+Check whether group has role assignment on project
+
+ DELETE
+/v3/projects/{project_id}/groups/{group_id}/roles/{role_id}
+Unassign role from group on project
+
+ GET
+/v3/projects/{project_id}/users/{user_id}/roles
+List role assignments for user on project
+
+ PUT
+/v3/projects/{project_id}/users/{user_id}/roles/{role_id}
+Assign role to user on project
+
+ HEAD
+/v3/projects/{project_id}/users/{user_id}/roles/{role_id}
+Check whether user has role assignment on project
+
+ DELETE
+/v3/projects/{project_id}/users/{user_id}/roles/{role_id}
+Unassign role from user on project
+
+ GET
+/v3/roles/{prior_role_id}/implies
+List implied (inference) roles for role
+
+ PUT
+/v3/roles/{prior_role_id}/implies/{implies_role_id}
+Create role inference rule
+
+ GET
+/v3/roles/{prior_role_id}/implies/{implies_role_id}
+Get role inference rule
+
+ HEAD
+/v3/roles/{prior_role_id}/implies/{implies_role_id}
+Confirm role inference rule
+
+ DELETE
+/v3/roles/{prior_role_id}/implies/{implies_role_id}
+Delete role inference rule
+
+ GET
+/v3/role_assignments
+List role assignments
+
+ GET
+/v3/role_inferences
+List all role inference rules
+
+System Role Assignments¶
+A system role assignment ultimately controls access to system-level API calls. System role assignments are similar to project or domain role assignments, but are meant for a different target. Instead of giving a user or group a role on a project, they can be given a system role.
+
+Good examples of system-level APIs include management of the service catalog and compute hypervisors.
+
+ GET
+/v3/system/users/{user_id}/roles
+List system role assignments for a user
+
+ PUT
+/v3/system/users/{user_id}/roles/{role_id}
+Assign a system role to a user
+
+ HEAD
+/v3/system/users/{user_id}/roles/{role_id}
+Check user for a system role assignment
+
+ GET
+/v3/system/users/{user_id}/roles/{role_id}
+Get system role assignment for a user
+
+ DELETE
+/v3/system/users/{user_id}/roles/{role_id}
+Delete a system role assignment from a user
+
+ GET
+/v3/system/groups/{group_id}/roles
+List system role assignments for a group
+
+ PUT
+/v3/system/groups/{group_id}/roles/{role_id}
+Assign a system role to a group
+
+ HEAD
+/v3/system/groups/{group_id}/roles/{role_id}
+Check group for a system role assignment
+
+ GET
+/v3/system/groups/{group_id}/roles/{role_id}
+Get system role assignment for a group
+
+ DELETE
+/v3/system/groups/{group_id}/roles/{role_id}
+Delete a system role assignment from a group
+
+Service catalog and endpoints
+A service is an OpenStack web service that you can access through a URL, i.e. an endpoint.
+
+A service catalog lists the services that are available to the caller based upon the current authorization.
+
+You can create, list, show details for, update, and delete services. When you create or update a service, you can enable the service, which causes it and its endpoints to appear in the service catalog.
+
+You can create, list, show details for, update, and delete endpoints.
+
+ GET
+/v3/services
+List services
+
+ POST
+/v3/services
+Create service
+
+ GET
+/v3/services/{service_id}
+Show service details
+
+ PATCH
+/v3/services/{service_id}
+Update service
+
+ DELETE
+/v3/services/{service_id}
+Delete service
+
+ GET
+/v3/endpoints
+List endpoints
+
+ POST
+/v3/endpoints
+Create endpoint
+
+ GET
+/v3/endpoints/{endpoint_id}
+Show endpoint details
+
+ PATCH
+/v3/endpoints/{endpoint_id}
+Update endpoint
+
+ DELETE
+/v3/endpoints/{endpoint_id}
+Delete endpoint
+
+Unified Limits
+In OpenStack, a quota system mainly contains two parts: limit and usage. The Unified limits in Keystone is a replacement of the limit part. It contains two kinds of resouces: Registered Limit and Limit. A registered limit is a default limit. It is usually created by the services which are registered in Keystone. A limit is the limit that override the registered limit for each project.
+
+ GET
+/v3/registered_limits
+List Registered Limits
+
+ POST
+/v3/registered_limits
+Create Registered Limits
+
+ PATCH
+/v3/registered_limits/{registered_limit_id}
+Update Registered Limit
+
+ GET
+/v3/registered_limits/{registered_limit_id}
+Show Registered Limit Details
+
+ DELETE
+/v3/registered_limits/{registered_limit_id}
+Delete Registered Limit
+
+ GET
+/v3/limits/model
+Get Enforcement Model
+
+ GET
+/v3/limits
+List Limits
+
+ POST
+/v3/limits
+Create Limits
+
+ PATCH
+/v3/limits/{limit_id}
+Update Limit
+
+ GET
+/v3/limits/{limit_id}
+Show Limit Details
+
+ DELETE
+/v3/limits/{limit_id}
+Delete Limit
+
+Users
+A user is an individual API consumer that is owned by a domain. A role explicitly associates a user with projects or domains. A user with no assigned roles has no access to OpenStack resources.
+
+You can list, create, show details for, update, delete, and change the password for users.
+
+You can also list groups, projects, and role assignments for a specified user. To list user roles, see Roles.
+
+ GET
+/v3/users
+List users
+
+ POST
+/v3/users
+Create user
+
+ GET
+/v3/users/{user_id}
+Show user details
+
+ PATCH
+/v3/users/{user_id}
+Update user
+
+ DELETE
+/v3/users/{user_id}
+Delete user
+
+ GET
+/v3/users/{user_id}/groups
+List groups to which a user belongs
+
+ GET
+/v3/users/{user_id}/projects
+List projects for user
+
+ POST
+/v3/users/{user_id}/password
+Change password for user
+
+  
+this page last updated: 2026-03-24 16:34:40
+Creative Commons Attribution 3.0 License
+Except where otherwise noted, this document is licensed under Creative Commons Attribution 3.0 License. See all OpenStack Legal Documents.
+
+ found an error? report a bug
+keystone
+Identity API v3 (CURRENT)
+What’s New in Version 3.14 (Ussuri)
+What’s New in Version 3.13 (Train)
+What’s New in Version 3.12 (Stein)
+What’s New in Version 3.11 (Rocky)
+What’s New in Version 3.10 (Queens)
+What’s New in Version 3.9 (Queens)
+What’s New in Version 3.8 (Ocata)
+What’s New in Version 3.7 (Newton)
+What’s New in Version 3.6 (Mitaka)
+What’s New in Version 3.5 (Liberty)
+What’s New in Version 3.4 (Kilo)
+What’s New in Version 3.3 (Juno)
+What’s New in Version 3.2 (Icehouse)
+What’s New in Version 3.1 (Havana)
+What’s New in Version 3.0 (Grizzly)
+Relationships
+Identity API Operations
+Authentication and token management
+Password authentication with unscoped authorization
+Password authentication with scoped authorization
+Password authentication with explicit unscoped authorization
+Token authentication with unscoped authorization
+Token authentication with scoped authorization
+Token authentication with explicit unscoped authorization
+Multi-Step authentication (2-Factor Password and TOTP example)
+Validate and show information for token
+Check token
+Revoke token
+Get service catalog
+Get available project scopes
+Get available domain scopes
+Get available system scopes
+Application Credentials
+Authenticating with an Application Credential
+Create application credential
+List application credentials
+Show application credential details
+Delete application credential
+List access rules
+Show access rule details
+Delete access rule
+Credentials
+Create credential
+List credentials
+Show credential details
+Update credential
+Delete credential
+Domains
+List domains
+Create domain
+Show domain details
+Update domain
+Delete domain
+Domain configuration
+Show default configuration settings
+Show default configuration for a group
+Show default option for a group
+Show domain group option configuration
+Update domain group option configuration
+Delete domain group option configuration
+Show domain group configuration
+Update domain group configuration
+Delete domain group configuration
+Create domain configuration
+Show domain configuration
+Update domain configuration
+Delete domain configuration
+Groups
+List groups
+Create group
+Show group details
+Update group
+Delete group
+List users in group
+Add user to group
+Check whether user belongs to group
+Remove user from group
+OS-INHERIT
+Assign role to user on projects owned by domain
+Assign role to group on projects owned by a domain
+List user’s inherited project roles on a domain
+List group’s inherited project roles on domain
+Check if user has an inherited project role on domain
+Check if group has an inherited project role on domain
+Revoke an inherited project role from user on domain
+Revoke an inherited project role from group on domain
+Assign role to user on projects in a subtree
+Assign role to group on projects in a subtree
+Check if user has an inherited project role on project
+Check if group has an inherited project role on project
+Revoke an inherited project role from user on project
+Revoke an inherited project role from group on project
+List role assignments
+OS-PKI (DEPRECATED)
+List revoked tokens
+Policies
+Create policy
+List policies
+Show policy details
+Update policy
+Delete policy
+Projects
+List projects
+Create project
+Show project details
+Update project
+Delete project
+Project tags
+List tags for a project
+Modify tag list for a project
+Remove all tags from a project
+Check if project contains tag
+Add single tag to a project
+Delete single tag from project
+Filtering and searching by tags
+Regions
+Show region details
+Update region
+Delete region
+List regions
+Create region
+Roles
+List roles
+Create role
+Show role details
+Update role
+Delete role
+List role assignments for group on domain
+Assign role to group on domain
+Check whether group has role assignment on domain
+Unassign role from group on domain
+List role assignments for user on domain
+Assign role to user on domain
+Check whether user has role assignment on domain
+Unassigns role from user on domain
+List role assignments for group on project
+Assign role to group on project
+Check whether group has role assignment on project
+Unassign role from group on project
+List role assignments for user on project
+Assign role to user on project
+Check whether user has role assignment on project
+Unassign role from user on project
+List implied (inference) roles for role
+Create role inference rule
+Get role inference rule
+Confirm role inference rule
+Delete role inference rule
+List role assignments
+List all role inference rules
+System Role Assignments
+List system role assignments for a user
+Assign a system role to a user
+Check user for a system role assignment
+Get system role assignment for a user
+Delete a system role assignment from a user
+List system role assignments for a group
+Assign a system role to a group
+Check group for a system role assignment
+Get system role assignment for a group
+Delete a system role assignment from a group
+Service catalog and endpoints
+List services
+Create service
+Show service details
+Update service
+Delete service
+List endpoints
+Create endpoint
+Show endpoint details
+Update endpoint
+Delete endpoint
+Unified Limits
+List Registered Limits
+Create Registered Limits
+Update Registered Limit
+Show Registered Limit Details
+Delete Registered Limit
+Get Enforcement Model
+List Limits
+Create Limits
+Update Limit
+Show Limit Details
+Delete Limit
+Users
+List users
+Create user
+Show user details
+Update user
+Delete user
+List groups to which a user belongs
+List projects for user
+Change password for user
+OpenStack
+Projects
+OpenStack Security
+Blog
+News
+Community
+User Groups
+Events
+Jobs
+Companies
+Contribute
+Documentation
+OpenStack Manuals
+Getting Started
+API Documentation
+Wiki
+Branding & Legal
+Legal Docs
+Logos & Guidelines
+Trademark Policy
+Privacy Policy
+OpenInfra CLA
+Stay In Touch
+   
+The OpenStack project is provided under the Apache 2.0 license. Docs.openstack.org is powered by Rackspace Cloud Computing.

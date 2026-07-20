@@ -1,0 +1,115 @@
+
+ Global Search
+Software
+Use Cases
+Events
+Community
+Marketplace
+Blog
+Docs
+Join
+Log In
+Block Storage API
+ 
+Contents:
+
+API content can be searched using the Search Page.
+
+Details for each microversion change can be found in the REST API Version History documentation.
+
+Block Storage API V3 (CURRENT)
+API versions
+API version details
+API extensions (extensions)
+Volume types (types)
+Volume type access (types, action) (types, os-volume-type-access)
+Default Volume Types (default-types)
+Volumes (volumes)
+Volume actions (volumes, action)
+Volume manage extension (manageable_volumes)
+Volume snapshots (snapshots)
+Snapshot actions (snapshots, action)
+Snapshot manage extension (manageable_snapshots)
+Volume transfer
+Volume transfers (volume-transfers) (3.55 or later)
+Attachments (attachments)
+Availability zones (os-availability-zone)
+Back-end storage pools
+Backups (backups)
+Backup actions (backups, action)
+Capabilities for storage back ends (capabilities)
+Clusters (clusters)
+Consistency groups (DEPRECATED)
+Consistency group snapshots (DEPRECATED)
+Services (os-services)
+Generic volume groups (groups)
+Group replication (groups, action)
+Group snapshots (group_snapshots)
+Group types (group_types)
+Group type specs (group_types, group_specs)
+Hosts extension (os-hosts)
+Limits (limits)
+Messages (messages)
+Resource Filters (resource_filters)
+Quality of service (QoS) specifications (qos-specs)
+Quota class set extension (os-quota-class-sets)
+Quota sets extension (os-quota-sets)
+Workers (workers)
+Valid boolean values
+Block Storage API V2 (REMOVED)
+API versions
+Availability zones (os-availability-zone)
+Backups (backups)
+Backup actions (backups, action)
+Capabilities for storage back ends (capabilities)
+Consistency group snapshots
+Consistency groups
+Hosts extension (os-hosts)
+Limits (limits)
+Back-end storage pools
+Volume transfer
+Quality of service (QoS) specifications (qos-specs)
+Quota class set extension (os-quota-class-sets)
+Quota sets extension (os-quota-sets)
+Volume manage extension (os-volume-manage)
+Volume type access (volumes)
+API extensions (extensions)
+Volume snapshots (snapshots)
+Snapshot actions (snapshots, action)
+Volume types (types)
+API version details
+Volume actions (volumes, action)
+Volumes (volumes)
+ 
+this page last updated: 2026-02-18 10:20:42
+Creative Commons Attribution 3.0 License
+Except where otherwise noted, this document is licensed under Creative Commons Attribution 3.0 License. See all OpenStack Legal Documents.
+
+ found an error? report a bug
+cinder
+Block Storage API
+OpenStack
+Projects
+OpenStack Security
+Blog
+News
+Community
+User Groups
+Events
+Jobs
+Companies
+Contribute
+Documentation
+OpenStack Manuals
+Getting Started
+API Documentation
+Wiki
+Branding & Legal
+Legal Docs
+Logos & Guidelines
+Trademark Policy
+Privacy Policy
+OpenInfra CLA
+Stay In Touch
+   
+The OpenStack project is provided under the Apache 2.0 license. Docs.openstack.org is powered by Rackspace Cloud Computing.

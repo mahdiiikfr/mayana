@@ -1,0 +1,1913 @@
+
+ Global Search
+Software
+Use Cases
+Events
+Community
+Marketplace
+Blog
+Docs
+Join
+Log In
+Compute API
+This is a reference for the OpenStack Compute API which is provided by the Nova project. To learn more about the OpenStack Compute API concepts, please refer to the API guide.
+
+API Versions
+In order to bring new features to users over time, the Nova API supports versioning. There are two kinds of versions in Nova.
+
+‘’major versions’’, which have dedicated urls
+
+‘’microversions’’, which can be requested through the use of the X-OpenStack-Nova-API-Version header, or since microversion 2.27 the OpenStack-API-Version header may also be used.
+
+For more details about Microversions, please reference: Microversions
+
+ Note
+
+The maximum microversion supported by each release varies. Please reference: API Microversion History for API microversion history details.
+
+The Version APIs work differently from other APIs as they do not require authentication.
+
+ GET
+/
+List All Major Versions
+
+ GET
+/{api_version}/
+Show Details of Specific API Version
+
+Service URLs
+All API calls described throughout the rest of this document require authentication with the OpenStack Identity service. After authentication, a base service url can be extracted from the Identity token of type compute. This service url will be the root url that every API call uses to build a full path.
+
+For instance, if the service url is http://mycompute.pvt/compute/v2.1 then the full API call for /servers is http://mycompute.pvt/compute/v2.1/servers.
+
+Depending on the deployment, the Compute service url might be http or https, a custom port, a custom path, and include your tenant id. The only way to know the urls for your deployment is by using the service catalog. The Compute URL should never be hard coded in applications, even if they are only expected to work at a single site. It should always be discovered from the Identity token.
+
+As such, for the rest of this document we will be using short hand where GET /servers really means GET {your_compute_service_url}/servers.
+
+Request IDs
+Users can specify the global request ID in the request header. Users can receive the local request ID in the response header.
+
+For more details about Request IDs, please reference: Faults
+
+Request
+
+Name
+
+In
+
+Type
+
+Description
+
+X-Openstack-Request-Id (Optional)
+
+header
+
+string
+
+The global request ID, which is a unique common ID for tracking each request in OpenStack components. The format of the global request ID must be req- + UUID (UUID4). If not in accordance with the format, it is ignored. It is associated with the request and appears in the log lines for that request. By default, the middleware configuration ensures that the global request ID appears in the log files.
+
+New in version 2.46
+
+Response
+
+Name
+
+In
+
+Type
+
+Description
+
+X-Compute-Request-Id
+
+header
+
+string
+
+The local request ID, which is a unique ID generated automatically for tracking each request to nova. It is associated with the request and appears in the log lines for that request. By default, the middleware configuration ensures that the local request ID appears in the log files.
+
+ Note
+
+This header exists for backward compatibility.
+
+X-Openstack-Request-Id
+
+header
+
+string
+
+The local request ID, which is a unique ID generated automatically for tracking each request to nova. It is associated with the request and appears in the log lines for that request. By default, the middleware configuration ensures that the local request ID appears in the log files.
+
+New in version 2.46
+
+Servers (servers)
+Lists, creates, shows details for, updates, and deletes servers.
+
+Passwords
+
+When you create a server, you can specify a password through the optional adminPass attribute. The password must meet the complexity requirements set by your OpenStack Compute provider. The server might enter an ERROR state if the complexity requirements are not met. In this case, a client might issue a change password action to reset the server password.
+
+If you do not specify a password, the API generates and assigns a random password that it returns in the response object. This password meets the security requirements set by the compute provider. For security reasons, subsequent GET calls do not require this password.
+
+Server metadata
+
+You can specify custom server metadata at server launch time. The maximum size for each metadata key-value pair is 255 bytes. The compute provider determines the maximum number of key-value pairs for each server. You can query this value through the maxServerMeta absolute limit.
+
+Server networks
+
+You can specify one or more networks to which the server connects at launch time. Users can also specify a specific port on the network or the fixed IP address to assign to the server interface.
+
+ Note
+
+You can use both IPv4 and IPv6 addresses as access addresses, and you can assign both addresses simultaneously. You can update access addresses after you create a server.
+
+Server personality
+
+ Note
+
+The use of personality files is deprecated starting with the 2.57 microversion. Use metadata and user_data to customize a server instance.
+
+To customize the personality of a server instance, you can inject data into its file system. For example, you might insert ssh keys, set configuration files, or store data that you want to retrieve from inside the instance. This customization method provides minimal launch-time personalization. If you require significant customization, create a custom image.
+
+Follow these guidelines when you inject files:
+
+The maximum size of the file path data is 255 bytes.
+
+Encode the file contents as a Base64 string. The compute provider determines the maximum size of the file contents. The image that you use to create the server determines this value.
+
+ Note
+
+The maximum limit refers to the number of bytes in the decoded data and not to the number of characters in the encoded data.
+
+The maxPersonality absolute limit defines the maximum number of file path and content pairs that you can supply. The compute provider determines this value.
+
+The maxPersonalitySize absolute limit is a byte limit that applies to all images in the deployment. Providers can set additional per-image personality limits.
+
+The file injection might not occur until after the server builds and boots.
+
+After file injection, only system administrators can access personality files. For example, on Linux, all files have root as the owner and the root group as the group owner, and allow only user and group read access (chmod 440).
+
+Server access addresses
+
+In a hybrid environment, the underlying implementation might not control the IP address of a server. Instead, the access IP address might be part of the dedicated hardware; for example, a router/NAT device. In this case, you cannot use the addresses that the implementation provides to access the server from outside the local LAN. Instead, the API might assign a separate access address at creation time to provide access to the server. This address might not be directly bound to a network interface on the server and might not necessarily appear when you query the server addresses. However, clients should use an access address to access the server directly.
+
+ GET
+/servers
+List Servers
+
+ POST
+/servers
+Create Server
+
+ POST
+/servers
+Create Multiple Servers
+
+ GET
+/servers/detail
+List Servers Detailed
+
+ GET
+/servers/{server_id}
+Show Server Details
+
+ PUT
+/servers/{server_id}
+Update Server
+
+ DELETE
+/servers/{server_id}
+Delete Server
+
+Servers - run an action (servers, action)
+Enables all users to perform an action on a server. Specify the action in the request body.
+
+There are many actions available for a server:
+
+You can associate and disassociate a fixed or floating IP address with or from a server
+
+You can create an image from a server
+
+You can create a backup of a server
+
+You can force-delete a server before deferred cleanup
+
+You can lock, pause, reboot, rebuild, rescue, resize, resume, confirm the resize of, revert a pending resize for, shelve, shelf-offload, unshelve, start, stop, unlock, unpause, and unrescue a server
+
+You can change the password of the server
+
+You can add a security group to or remove a security group from a server
+
+You can trigger a crash dump into a server
+
+You can get a graphical or serial console for a server
+
+…among others.
+
+ POST
+/servers/{server_id}/action
+Add (Associate) Floating Ip (addFloatingIp Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Add Security Group To A Server (addSecurityGroup Action)
+
+ POST
+/servers/{server_id}/action
+Change Administrative Password (changePassword Action)
+
+ POST
+/servers/{server_id}/action
+Confirm Resized Server (confirmResize Action)
+
+ POST
+/servers/{server_id}/action
+Create Server Back Up (createBackup Action)
+
+ POST
+/servers/{server_id}/action
+Create Image (createImage Action)
+
+ POST
+/servers/{server_id}/action
+Lock Server (lock Action)
+
+ POST
+/servers/{server_id}/action
+Pause Server (pause Action)
+
+ POST
+/servers/{server_id}/action
+Reboot Server (reboot Action)
+
+ POST
+/servers/{server_id}/action
+Rebuild Server (rebuild Action)
+
+ POST
+/servers/{server_id}/action
+Remove (Disassociate) Floating Ip (removeFloatingIp Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Remove Security Group From A Server (removeSecurityGroup Action)
+
+ POST
+/servers/{server_id}/action
+Rescue Server (rescue Action)
+
+ POST
+/servers/{server_id}/action
+Resize Server (resize Action)
+
+ POST
+/servers/{server_id}/action
+Resume Suspended Server (resume Action)
+
+ POST
+/servers/{server_id}/action
+Revert Resized Server (revertResize Action)
+
+ POST
+/servers/{server_id}/action
+Start Server (os-start Action)
+
+ POST
+/servers/{server_id}/action
+Stop Server (os-stop Action)
+
+ POST
+/servers/{server_id}/action
+Suspend Server (suspend Action)
+
+ POST
+/servers/{server_id}/action
+Unlock Server (unlock Action)
+
+ POST
+/servers/{server_id}/action
+Unpause Server (unpause Action)
+
+ POST
+/servers/{server_id}/action
+Unrescue Server (unrescue Action)
+
+ POST
+/servers/{server_id}/action
+Add (Associate) Fixed Ip (addFixedIp Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Remove (Disassociate) Fixed Ip (removeFixedIp Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Force-Delete Server (forceDelete Action)
+
+ POST
+/servers/{server_id}/action
+Restore Soft-Deleted Instance (restore Action)
+
+ POST
+/servers/{server_id}/action
+Show Console Output (os-getConsoleOutput Action)
+
+ POST
+/servers/{server_id}/action
+Shelve Server (shelve Action)
+
+ POST
+/servers/{server_id}/action
+Shelf-Offload (Remove) Server (shelveOffload Action)
+
+ POST
+/servers/{server_id}/action
+Unshelve (Restore) Shelved Server (unshelve Action)
+
+ POST
+/servers/{server_id}/action
+Trigger Crash Dump In Server
+
+ POST
+/servers/{server_id}/action
+Get Serial Console (os-getSerialConsole Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Get SPICE Console (os-getSPICEConsole Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Get VNC Console (os-getVNCConsole Action) (DEPRECATED)
+
+Servers - run an administrative action (servers, action)
+Enables administrators to perform an action on a server. Specify the action in the request body.
+
+You can inject network information into, migrate, live-migrate, reset networking on, reset the state of a server, and evacuate a server from a failed host to a new host.
+
+ POST
+/servers/{server_id}/action
+Inject Network Information (injectNetworkInfo Action)
+
+ POST
+/servers/{server_id}/action
+Migrate Server (migrate Action)
+
+ POST
+/servers/{server_id}/action
+Live-Migrate Server (os-migrateLive Action)
+
+ POST
+/servers/{server_id}/action
+Reset Networking On A Server (resetNetwork Action) (DEPRECATED)
+
+ POST
+/servers/{server_id}/action
+Reset Server State (os-resetState Action)
+
+ POST
+/servers/{server_id}/action
+Evacuate Server (evacuate Action)
+
+Server Consoles
+Manage server consoles.
+
+ POST
+/servers/{server_id}/remote-consoles
+Create Console
+
+ GET
+/os-console-auth-tokens/{console_token}
+Show Console Connection Information
+
+Servers Security Groups (servers, os-security-groups)
+Lists Security Groups for a server.
+
+ GET
+/servers/{server_id}/os-security-groups
+List Security Groups By Server
+
+Servers diagnostics (servers, diagnostics)
+Shows the usage data for a server.
+
+ GET
+/servers/{server_id}/diagnostics
+Show Server Diagnostics
+
+Servers IPs (servers, ips)
+Lists the IP addresses for an instance and shows details for an IP address.
+
+ GET
+/servers/{server_id}/ips
+List Ips
+
+ GET
+/servers/{server_id}/ips/{network_label}
+Show Ip Details
+
+Server metadata (servers, metadata)
+Lists metadata, creates or replaces one or more metadata items, and updates one or more metadata items for a server.
+
+Shows details for, creates or replaces, and updates a metadata item, by key, for a server.
+
+ GET
+/servers/{server_id}/metadata
+List All Metadata
+
+ POST
+/servers/{server_id}/metadata
+Create or Update Metadata Items
+
+ PUT
+/servers/{server_id}/metadata
+Replace Metadata Items
+
+ GET
+/servers/{server_id}/metadata/{key}
+Show Metadata Item Details
+
+ PUT
+/servers/{server_id}/metadata/{key}
+Create Or Update Metadata Item
+
+ DELETE
+/servers/{server_id}/metadata/{key}
+Delete Metadata Item
+
+Servers actions (servers, os-instance-actions)
+List actions and action details for a server.
+
+ GET
+/servers/{server_id}/os-instance-actions
+List Actions For Server
+
+ GET
+/servers/{server_id}/os-instance-actions/{request_id}
+Show Server Action Details
+
+Port interfaces (servers, os-interface)
+List port interfaces, show port interface details of the given server. Create a port interface and uses it to attach a port to the given server, detach a port interface from the given server.
+
+ GET
+/servers/{server_id}/os-interface
+List Port Interfaces
+
+ POST
+/servers/{server_id}/os-interface
+Create Interface
+
+ GET
+/servers/{server_id}/os-interface/{port_id}
+Show Port Interface Details
+
+ DELETE
+/servers/{server_id}/os-interface/{port_id}
+Detach Interface
+
+Servers password (servers, os-server-password)
+Shows the encrypted administrative password. Also, clears the encrypted administrative password for a server, which removes it from the metadata server.
+
+ GET
+/servers/{server_id}/os-server-password
+Show Server Password
+
+ DELETE
+/servers/{server_id}/os-server-password
+Clear Admin Password
+
+Servers with shares attachments (servers, shares)
+Attaches shares that are created through the Manila share API to server instances. Also, lists share attachments for a server, shows details for a share attachment, and detaches a share (New in version 2.97).
+
+ GET
+/servers/{server_id}/shares
+List share attachments for an instance
+
+ POST
+/servers/{server_id}/shares
+Attach a share to an instance
+
+ GET
+/servers/{server_id}/shares/{share_id}
+Show a detail of a share attachment
+
+ DELETE
+/servers/{server_id}/shares/{share_id}
+Detach a share from an instance
+
+Servers with volume attachments (servers, os-volume_attachments)
+Attaches volumes that are created through the volume API to server instances. Also, lists volume attachments for a server, shows details for a volume attachment, and detaches a volume.
+
+ GET
+/servers/{server_id}/os-volume_attachments
+List volume attachments for an instance
+
+ POST
+/servers/{server_id}/os-volume_attachments
+Attach a volume to an instance
+
+ GET
+/servers/{server_id}/os-volume_attachments/{volume_id}
+Show a detail of a volume attachment
+
+ PUT
+/servers/{server_id}/os-volume_attachments/{volume_id}
+Update a volume attachment
+
+ DELETE
+/servers/{server_id}/os-volume_attachments/{volume_id}
+Detach a volume from an instance
+
+Flavors
+Show and manage server flavors.
+
+Flavors are a way to describe the basic dimensions of a server to be created including how much cpu, ram, and disk space are allocated to a server built with this flavor.
+
+ GET
+/flavors
+List Flavors
+
+ POST
+/flavors
+Create Flavor
+
+ GET
+/flavors/detail
+List Flavors With Details
+
+ GET
+/flavors/{flavor_id}
+Show Flavor Details
+
+ PUT
+/flavors/{flavor_id}
+Update Flavor Description
+
+ DELETE
+/flavors/{flavor_id}
+Delete Flavor
+
+Flavors access (flavors, os-flavor-access)
+Lists tenants who have access to a private flavor and adds private flavor access to and removes private flavor access from tenants. By default, only administrators can manage private flavor access. A private flavor has is_public set to false while a public flavor has is_public set to true.
+
+ GET
+/flavors/{flavor_id}/os-flavor-access
+List Flavor Access Information For Given Flavor
+
+ POST
+/flavors/{flavor_id}/action
+Add Flavor Access To Tenant (addTenantAccess Action)
+
+ POST
+/flavors/{flavor_id}/action
+Remove Flavor Access From Tenant (removeTenantAccess Action)
+
+Flavors extra-specs (flavors, os-flavor-extra-specs)
+Lists, creates, deletes, and updates the extra-specs or keys for a flavor.
+
+Refer to Compute Flavors for available built-in extra specs.
+
+ GET
+/flavors/{flavor_id}/os-extra_specs
+List Extra Specs For A Flavor
+
+ POST
+/flavors/{flavor_id}/os-extra_specs
+Create Extra Specs For A Flavor
+
+ GET
+/flavors/{flavor_id}/os-extra_specs/{flavor_extra_spec_key}
+Show An Extra Spec For A Flavor
+
+ PUT
+/flavors/{flavor_id}/os-extra_specs/{flavor_extra_spec_key}
+Update An Extra Spec For A Flavor
+
+ DELETE
+/flavors/{flavor_id}/os-extra_specs/{flavor_extra_spec_key}
+Delete An Extra Spec For A Flavor
+
+Keypairs (keypairs)
+Generates, imports, and deletes SSH keys.
+
+ GET
+/os-keypairs
+List Keypairs
+
+ POST
+/os-keypairs
+Import (or create) Keypair
+
+ GET
+/os-keypairs/{keypair_name}
+Show Keypair Details
+
+ DELETE
+/os-keypairs/{keypair_name}
+Delete Keypair
+
+Limits (limits)
+Shows rate and absolute limits for the project.
+
+ GET
+/limits
+Show Rate And Absolute Limits
+
+Host aggregates (os-aggregates)
+Creates and manages host aggregates. An aggregate assigns metadata to groups of compute nodes.
+
+Policy defaults enable only users with the administrative role to perform operations with aggregates. Cloud providers can change these permissions through policy file configuration.
+
+ GET
+/os-aggregates
+List Aggregates
+
+ POST
+/os-aggregates
+Create Aggregate
+
+ GET
+/os-aggregates/{aggregate_id}
+Show Aggregate Details
+
+ PUT
+/os-aggregates/{aggregate_id}
+Update Aggregate
+
+ DELETE
+/os-aggregates/{aggregate_id}
+Delete Aggregate
+
+ POST
+/os-aggregates/{aggregate_id}/action
+Add Host
+
+ POST
+/os-aggregates/{aggregate_id}/action
+Remove Host
+
+ POST
+/os-aggregates/{aggregate_id}/action
+Create Or Update Aggregate Metadata
+
+ POST
+/os-aggregates/{aggregate_id}/images
+Request Image Pre-caching for Aggregate
+
+Assisted volume snapshots (os-assisted-volume-snapshots)
+Creates and deletes snapshots through an emulator/hypervisor. Only qcow2 file format is supported.
+
+This API is only implemented by the libvirt compute driver.
+
+An internal snapshot that lacks storage such as NFS can use an emulator/hypervisor to add the snapshot feature. This is used to enable snapshot of volumes on backends such as NFS by storing data as qcow2 files on these volumes.
+
+This API is only ever called by Cinder, where it is used to create a snapshot for drivers that extend the remotefs Cinder driver.
+
+ POST
+/os-assisted-volume-snapshots
+Create Assisted Volume Snapshots
+
+ DELETE
+/os-assisted-volume-snapshots/{snapshot_id}
+Delete Assisted Volume Snapshot
+
+Availability zones (os-availability-zone)
+Lists and gets detailed availability zone information.
+
+An availability zone is created or updated by setting the availability_zone parameter in the create, update, or create or update methods of the Host Aggregates API. See Host Aggregates for more details.
+
+ GET
+/os-availability-zone
+Get Availability Zone Information
+
+ GET
+/os-availability-zone/detail
+Get Detailed Availability Zone Information
+
+Hypervisors (os-hypervisors)
+Lists all hypervisors, shows summary statistics for all hypervisors over all compute nodes, shows details for a hypervisor, shows the uptime for a hypervisor, lists all servers on hypervisors that match the given hypervisor_hostname_pattern or searches for hypervisors by the given hypervisor_hostname_pattern.
+
+ GET
+/os-hypervisors
+List Hypervisors
+
+ GET
+/os-hypervisors/detail
+List Hypervisors Details
+
+ GET
+/os-hypervisors/statistics
+Show Hypervisor Statistics (DEPRECATED)
+
+ GET
+/os-hypervisors/{hypervisor_id}
+Show Hypervisor Details
+
+ GET
+/os-hypervisors/{hypervisor_id}/uptime
+Show Hypervisor Uptime (DEPRECATED)
+
+ GET
+/os-hypervisors/{hypervisor_hostname_pattern}/search
+Search Hypervisor (DEPRECATED)
+
+ GET
+/os-hypervisors/{hypervisor_hostname_pattern}/servers
+List Hypervisor Servers (DEPRECATED)
+
+Server usage audit log (os-instance-usage-audit-log)
+Audit server usage of the cloud. This API is dependent on the instance_usage_audit configuration option being set on all compute hosts where usage auditing is required.
+
+Policy defaults enable only users with the administrative role to perform all os-instance-usage-audit-log related operations. Cloud providers can change these permissions through the policy.yaml file.
+
+ GET
+/os-instance_usage_audit_log
+List Server Usage Audits
+
+ GET
+/os-instance_usage_audit_log/{before_timestamp}
+List Usage Audits Before Specified Time
+
+Migrations (os-migrations)
+Shows data on migrations.
+
+ GET
+/os-migrations
+List Migrations
+
+Server migrations (servers, migrations)
+List, show, perform actions on and delete server migrations.
+
+ GET
+/servers/{server_id}/migrations
+List Migrations
+
+ GET
+/servers/{server_id}/migrations/{migration_id}
+Show Migration Details
+
+ POST
+/servers/{server_id}/migrations/{migration_id}/action
+Force Migration Complete Action (force_complete Action)
+
+ DELETE
+/servers/{server_id}/migrations/{migration_id}
+Delete (Abort) Migration
+
+Quota sets (os-quota-sets)
+Permits administrators, depending on policy settings, to view default quotas, view details for quotas, revert quotas to defaults, and update the quotas for a project or a project and user.
+
+ GET
+/os-quota-sets/{tenant_id}
+Show A Quota
+
+ PUT
+/os-quota-sets/{tenant_id}
+Update Quotas
+
+ DELETE
+/os-quota-sets/{tenant_id}
+Revert Quotas To Defaults
+
+ GET
+/os-quota-sets/{tenant_id}/defaults
+List Default Quotas For Tenant
+
+ GET
+/os-quota-sets/{tenant_id}/detail
+Show The Detail of Quota
+
+Quota class sets (os-quota-class-sets)
+Show, Create or Update the quotas for a Quota Class. Nova supports implicit ‘default’ Quota Class only.
+
+ Note
+
+Once a default limit is set via the default quota class via the API, that takes precedence over any changes to that resource limit in the configuration options. In other words, once you’ve changed things via the API, you either have to keep those synchronized with the configuration values or remove the default limit from the database manually as there is no REST API for removing quota class values from the database.
+
+For Example: If you updated default quotas for instances, to 20, but didn’t change quota_instances in your nova.conf, you’d now have default quota for instances as 20 for all projects. If you then change quota_instances=5 in nova.conf, but didn’t update the default quota class via the API, you’ll still have a default quota of 20 for instances regardless of nova.conf. Refer: Quotas for more details.
+
+ Warning
+
+There is a bug in the v2.1 API until microversion 2.49 and the legacy v2 compatible API which does not return the server_groups and server_group_members quotas in GET and PUT os-quota-class-sets API response, whereas the v2 API used to return those keys in the API response. There is workaround to get the server_groups and server_group_members quotas using “List Default Quotas For Tenant” API in Quota sets (os-quota-sets) but that is per project quota. This issue is fixed in microversion 2.50, here onwards server_groups and server_group_members keys are returned in API response body.
+
+ GET
+/os-quota-class-sets/{id}
+Show the quota for Quota Class
+
+ PUT
+/os-quota-class-sets/{id}
+Create or Update Quotas for Quota Class
+
+Server groups (os-server-groups)
+Lists, shows information for, creates, and deletes server groups.
+
+ GET
+/os-server-groups
+List Server Groups
+
+ POST
+/os-server-groups
+Create Server Group
+
+ GET
+/os-server-groups/{server_group_id}
+Show Server Group Details
+
+ DELETE
+/os-server-groups/{server_group_id}
+Delete Server Group
+
+Server tags (servers, tags)
+Lists tags, creates, replaces or deletes one or more tags for a server, checks the existence of a tag for a server.
+
+Available since version 2.26
+
+Tags have the following restrictions:
+
+Tag is a Unicode bytestring no longer than 60 characters.
+
+Tag is a non-empty string.
+
+‘/’ is not allowed to be in a tag name
+
+Comma is not allowed to be in a tag name in order to simplify requests that specify lists of tags
+
+All other characters are allowed to be in a tag name
+
+Each server can have up to 50 tags.
+
+ GET
+/servers/{server_id}/tags
+List Tags
+
+ PUT
+/servers/{server_id}/tags
+Replace Tags
+
+ DELETE
+/servers/{server_id}/tags
+Delete All Tags
+
+ GET
+/servers/{server_id}/tags/{tag}
+Check Tag Existence
+
+ PUT
+/servers/{server_id}/tags/{tag}
+Add a Single Tag
+
+ DELETE
+/servers/{server_id}/tags/{tag}
+Delete a Single Tag
+
+Compute services (os-services)
+Lists all running Compute services in a region, enables or disables scheduling for a Compute service and deletes a Compute service.
+
+For an overview of Compute services, see OpenStack Compute.
+
+ GET
+/os-services
+List Compute Services
+
+ PUT
+/os-services/disable
+Disable Scheduling For A Compute Service
+
+ PUT
+/os-services/disable-log-reason
+Disable Scheduling For A Compute Service and Log Disabled Reason
+
+ PUT
+/os-services/enable
+Enable Scheduling For A Compute Service
+
+ PUT
+/os-services/force-down
+Update Forced Down
+
+ PUT
+/os-services/{service_id}
+Update Compute Service
+
+ DELETE
+/os-services/{service_id}
+Delete Compute Service
+
+Usage reports (os-simple-tenant-usage)
+Reports usage statistics of compute and storage resources periodically for an individual tenant or all tenants. The usage statistics will include all instances’ CPU, memory and local disk during a specific period.
+
+ Warning
+
+The os-simple-tenant-usage will report usage statistics based on the latest flavor that is configured in the virtual machine (VM), and ignoring stop, pause, and other events that might have happened with the VM. Therefore, it uses the time the VM existed in the cloud environment to execute the usage accounting.
+
+More information can be found at http://eavesdrop.openstack.org/meetings/nova/2020/nova.2020-12-03-16.00.log.txt, and https://review.opendev.org/c/openstack/nova/+/711113
+
+Microversion 2.40 added pagination (and next links) to the usage statistics via optional limit and marker query parameters. If limit isn’t provided, the configurable max_limit will be used which currently defaults to 1000. Older microversions will not accept these new paging query parameters, but they will start to silently limit by max_limit.
+
+/os-simple-tenant-usage?limit={limit}&marker={instance_uuid}
+/os-simple-tenant-usage/{tenant_id}?limit={limit}&marker={instance_uuid}
+ Note
+
+A tenant’s usage statistics may span multiple pages when the number of instances exceeds limit, and API consumers will need to stitch together the aggregate results if they still want totals for all instances in a specific time window, grouped by tenant.
+
+ GET
+/os-simple-tenant-usage
+List Tenant Usage Statistics For All Tenants
+
+ GET
+/os-simple-tenant-usage/{tenant_id}
+Show Usage Statistics For Tenant
+
+Create external events (os-server-external-events)
+ Warning
+
+This is an admin level service API only designed to be used by other OpenStack services. The point of this API is to coordinate between Nova and Neutron, Nova and Cinder, Nova and Ironic (and potentially future services) on activities they both need to be involved in, such as network hotplugging.
+
+Unless you are writing Neutron, Cinder or Ironic code you should not be using this API.
+
+Creates one or more external events. The API dispatches each event to a server instance.
+
+ POST
+/os-server-external-events
+Run Events
+
+Servers Topology (servers, topology)
+Shows the NUMA topology information for a server.
+
+ GET
+/servers/{server_id}/topology
+Show Server Topology
+
+Internal Service APIs
+ Warning
+
+The below Nova APIs are meant to communicate to OpenStack services. Those APIs are not supposed to be used by any users because they can make deployment or resources in unwanted state.
+
+Assisted volume snapshots (os-assisted-volume-snapshots)
+Creates and deletes snapshots through an emulator/hypervisor. Only qcow2 file format is supported.
+
+This API is only implemented by the libvirt compute driver.
+
+An internal snapshot that lacks storage such as NFS can use an emulator/hypervisor to add the snapshot feature. This is used to enable snapshot of volumes on backends such as NFS by storing data as qcow2 files on these volumes.
+
+This API is only ever called by Cinder, where it is used to create a snapshot for drivers that extend the remotefs Cinder driver.
+
+ POST
+/os-assisted-volume-snapshots
+Create Assisted Volume Snapshots
+
+ DELETE
+/os-assisted-volume-snapshots/{snapshot_id}
+Delete Assisted Volume Snapshot
+
+Update (“swapping”) Server volume attachments (servers, os-volume_attachments)
+Update (“swapping”) the server volume attachments which means swapping the volume attached to the server.
+
+ PUT
+/servers/{server_id}/os-volume_attachments/{volume_id}
+Update(swapping) a volume attachment
+
+Create external events (os-server-external-events)
+ Warning
+
+This is an admin level service API only designed to be used by other OpenStack services. The point of this API is to coordinate between Nova and Neutron, Nova and Cinder, Nova and Ironic (and potentially future services) on activities they both need to be involved in, such as network hotplugging.
+
+Unless you are writing Neutron, Cinder or Ironic code you should not be using this API.
+
+Creates one or more external events. The API dispatches each event to a server instance.
+
+ POST
+/os-server-external-events
+Run Events
+
+Deprecated APIs
+This section contains references for APIs which are deprecated and usually limited to some maximum microversion.
+
+Extensions (extensions) (DEPRECATED)
+Lists available extensions and shows information for an extension, by alias.
+
+Nova originally supported the concept of API extensions, that allowed implementations of Nova to change the API (add new resources, or attributes to existing resource objects) via extensions. In an attempt to expose to the user what was supported in a particular site, the extensions resource provided a list of extensions and detailed information on each. The net result was gratuitous differentiation in the API that required all users of OpenStack clouds to write specific code to interact with every cloud.
+
+As such, the entire extensions concept is deprecated, and will be removed in the near future.
+
+ GET
+/extensions
+List Extensions
+
+ GET
+/extensions/{alias}
+Show Extension Details
+
+Networks (os-networks) (DEPRECATED)
+ Warning
+
+This API was designed to work with nova-network which was deprecated in the 14.0.0 (Newton) release and removed in the 21.0.0 (Ussuri) release. Some features are proxied to the Network service (neutron) when appropriate, but as with all translation proxies, this is far from perfect compatibility. These APIs should be avoided in new applications in favor of using neutron directly. These will fail with a 404 starting from microversion 2.36. They were removed in the 21.0.0 (Ussuri) release.
+
+Creates, lists, shows information for, and deletes networks.
+
+Adds network to a project, disassociates a network from a project, and disassociates a project from a network.
+
+Associates host with and disassociates host from a network.
+
+ GET
+/os-networks
+List Networks
+
+ POST
+/os-networks
+Create Network
+
+ POST
+/os-networks/add
+Add Network
+
+ GET
+/os-networks/{network_id}
+Show Network Details
+
+ DELETE
+/os-networks/{network_id}
+Delete Network
+
+ POST
+/os-networks/{network_id}/action
+Associate Host
+
+ POST
+/os-networks/{network_id}/action
+Disassociate Network
+
+ POST
+/os-networks/{network_id}/action
+Disassociate Host
+
+ POST
+/os-networks/{network_id}/action
+Disassociate Project
+
+Volume extension (os-volumes, os-snapshots) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Volume service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Volume APIs.
+
+Manages volumes and snapshots for use with the Compute API. Lists, shows details, creates, and deletes volumes and snapshots.
+
+ GET
+/os-volumes
+List Volumes
+
+ POST
+/os-volumes
+Create Volume
+
+ GET
+/os-volumes/detail
+List Volumes With Details
+
+ GET
+/os-volumes/{volume_id}
+Show Volume Details
+
+ DELETE
+/os-volumes/{volume_id}
+Delete Volume
+
+ GET
+/os-snapshots
+List Snapshots
+
+ POST
+/os-snapshots
+Create Snapshot
+
+ GET
+/os-snapshots/detail
+List Snapshots With Details
+
+ GET
+/os-snapshots/{snapshot_id}
+Show Snapshot Details
+
+ DELETE
+/os-snapshots/{snapshot_id}
+Delete Snapshot
+
+Images (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Image service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. All the Image services proxy APIs except image metadata APIs will fail with a 404 starting from microversion 2.36. The image metadata APIs will fail with a 404 starting from microversion 2.39. See: Relevant Image APIs.
+
+Lists, shows details and deletes images. Also sets, lists, shows details, create, update and deletes image metadata.
+
+An image is a collection of files that you use to create and rebuild a server. By default, operators provide pre-built operating system images. You can also create custom images. See: Create Image Action.
+
+By default, the policy.yaml file authorizes all users to view the image size in the OS-EXT-IMG-SIZE:size extended attribute.
+
+ GET
+/images
+List Images
+
+ GET
+/images/detail
+List Images With Details
+
+ GET
+/images/{image_id}
+Show Image Details
+
+ DELETE
+/images/{image_id}
+Delete Image
+
+ GET
+/images/{image_id}/metadata
+List Image Metadata
+
+ POST
+/images/{image_id}/metadata
+Create Image Metadata
+
+ PUT
+/images/{image_id}/metadata
+Update Image Metadata
+
+ GET
+/images/{image_id}/metadata/{key}
+Show Image Metadata Item
+
+ PUT
+/images/{image_id}/metadata/{key}
+Create Or Update Image Metadata Item
+
+ DELETE
+/images/{image_id}/metadata/{key}
+Delete Image Metadata Item
+
+Bare metal nodes (os-baremetal-nodes) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Ironic service. They exist for legacy compatibility, but no new applications should use them. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Bare metal APIs.
+
+Bare metal nodes.
+
+ GET
+/os-baremetal-nodes
+List Bare Metal Nodes
+
+ GET
+/os-baremetal-nodes/{node_id}
+Show Bare Metal Node Details
+
+Project networks (os-tenant-networks) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Network service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Network APIs.
+
+Creates, lists, shows information for, and deletes project networks.
+
+ GET
+/os-tenant-networks
+List Project Networks
+
+ POST
+/os-tenant-networks
+Create Project Network
+
+ GET
+/os-tenant-networks/{network_id}
+Show Project Network Details
+
+ DELETE
+/os-tenant-networks/{network_id}
+Delete Project Network
+
+Floating IP pools (os-floating-ip-pools) (DEPRECATED)
+ Warning
+
+This API is a proxy call to the Network service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. This API will fail with a 404 starting from microversion 2.36.
+
+For the equivalent functionality in the Network service, one can request:
+
+GET /networks?router:external=True&fields=name
+Manages groups of floating IPs.
+
+ GET
+/os-floating-ip-pools
+List Floating Ip Pools
+
+Floating IPs (os-floating-ips) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Network service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Network APIs.
+
+Lists floating IP addresses for a project. Also, creates (allocates) a floating IP address for a project, shows floating IP address details, and deletes (deallocates) a floating IP address from a project.
+
+The cloud administrator configures a pool of floating IP addresses in OpenStack Compute. The project quota defines the maximum number of floating IP addresses that you can allocate to the project. After you allocate a floating IP address for a project, you can:
+
+Add (associate) the floating IP address with an instance in the project. You can associate only one floating IP address with an instance at a time.
+
+Remove (disassociate) the floating IP address from an instance in the project.
+
+Delete, or deallocate, a floating IP from the project, which automatically deletes any associations for that IP address.
+
+ GET
+/os-floating-ips
+List Floating Ip Addresses
+
+ POST
+/os-floating-ips
+Create (Allocate) Floating Ip Address
+
+ GET
+/os-floating-ips/{floating_ip_id}
+Show Floating Ip Address Details
+
+ DELETE
+/os-floating-ips/{floating_ip_id}
+Delete (Deallocate) Floating Ip Address
+
+Security groups (os-security-groups) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Network service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Network APIs.
+
+Lists, shows information for, creates, updates and deletes security groups.
+
+ GET
+/os-security-groups
+List Security Groups
+
+ POST
+/os-security-groups
+Create Security Group
+
+ GET
+/os-security-groups/{security_group_id}
+Show Security Group Details
+
+ PUT
+/os-security-groups/{security_group_id}
+Update Security Group
+
+ DELETE
+/os-security-groups/{security_group_id}
+Delete Security Group
+
+Rules for security group (os-security-group-rules) (DEPRECATED)
+ Warning
+
+These APIs are proxy calls to the Network service. Nova has deprecated all the proxy APIs and users should use the native APIs instead. These will fail with a 404 starting from microversion 2.36. See: Relevant Network APIs.
+
+Creates and deletes security group rules.
+
+ POST
+/os-security-group-rules
+Create Security Group Rule
+
+ DELETE
+/os-security-group-rules/{security_group_rule_id}
+Delete Security Group Rule
+
+Hosts (os-hosts) (DEPRECATED)
+ Warning
+
+The os-hosts API is deprecated as of the 2.43 microversion. Requests made with microversion >= 2.43 will result in a 404 error. To list and show host details, use the Hypervisors (os-hypervisors) API. To enable or disable a service, use the Compute services (os-services) API. There is no replacement for the shutdown, startup, reboot, or maintenance_mode actions as those are system-level operations which should be outside of the control of the compute service.
+
+Manages physical hosts. Some virt drivers do not support all host functions. For more information, see nova virt support matrix
+
+Policy defaults enable only users with the administrative role to perform all os-hosts related operations. Cloud providers can change these permissions through the policy.yaml file.
+
+ GET
+/os-hosts
+List Hosts
+
+ GET
+/os-hosts/{host_name}
+Show Host Details
+
+ PUT
+/os-hosts/{host_name}
+Update Host status
+
+ GET
+/os-hosts/{host_name}/reboot
+Reboot Host
+
+ GET
+/os-hosts/{host_name}/shutdown
+Shut Down Host
+
+ GET
+/os-hosts/{host_name}/startup
+Start Host
+
+Obsolete APIs
+This section contains the reference for APIs that were part of the OpenStack Compute API in the past, but no longer exist.
+
+Root certificates (os-certificates)
+Creates and shows details for a root certificate.
+
+ Warning
+
+This API existed solely because of the need to build euca bundles when Nova had an in tree EC2 API. It no longer interacts with any parts of the system besides its own certificate daemon. It was removed in the 16.0.0 Pike release.
+
+ POST
+/os-certificates
+Create Root Certificate
+
+ GET
+/os-certificates/root
+Show Root Certificate Details
+
+Cloudpipe (os-cloudpipe)
+ Warning
+
+This API only works with nova-network which is deprecated in favor of Neutron. It should be avoided in any new applications. It was removed in the 16.0.0 Pike release.
+
+Manages virtual VPNs for projects.
+
+ GET
+/os-cloudpipe
+List Cloudpipes
+
+ POST
+/os-cloudpipe
+Create Cloudpipe
+
+ PUT
+/os-cloudpipe/configure-project
+Update Cloudpipe
+
+Ping instances (os-fping)
+ Warning
+
+This API only works with nova-network which is deprecated. It should be avoided in any new applications. These will fail with a 404 starting from microversion 2.36. It was removed in the 18.0.0 Rocky release.
+
+Pings instances and reports which instances are alive.
+
+ GET
+/os-fping
+Ping Instances
+
+ GET
+/os-fping/{instance_id}
+Ping An Instance
+
+Servers virtual interfaces (servers, os-virtual-interfaces)
+Lists virtual interfaces for a server.
+
+ Warning
+
+Since this API is only implemented for the nova-network, the API is deprecated from the Microversion 2.44. This API will fail with a 404 starting from microversion 2.44. It was removed in the 18.0.0 Rocky release.
+
+To query the server attached neutron interface, please use the API GET /servers/{server_uuid}/os-interface.
+
+ Note
+
+This API is only implemented for the nova-network service and will result in a 400 error response if the cloud is using the Neutron networking service. Use the Neutron ports API to list ports for a given server by filtering ports based on the port device_id which is the {server_id}.
+
+ GET
+/servers/{server_id}/os-virtual-interfaces
+List Virtual Interfaces
+
+Fixed IPs (os-fixed-ips)
+ Warning
+
+These APIs only work with nova-network which is deprecated. These will fail with a 404 starting from microversion 2.36. They were removed in the 18.0.0 Rocky release.
+
+Shows data for a fixed IP, such as host name, CIDR, and address. Also, reserves and releases a fixed IP address.
+
+ GET
+/os-fixed-ips/{fixed_ip}
+Show Fixed Ip Details
+
+ POST
+/os-fixed-ips/{fixed_ip}/action
+Reserve Or Release A Fixed Ip
+
+Floating IPs bulk (os-floating-ips-bulk)
+ Warning
+
+Since these APIs are only implemented for nova-network, they are deprecated. These will fail with a 404 starting from microversion 2.36. They were removed in the 18.0.0 Rocky release.
+
+Bulk-creates, deletes, and lists floating IPs. Default pool name is nova.
+
+To view available pools, use the os-floating-ip-pools extension.
+
+ GET
+/os-floating-ips-bulk
+List Floating Ips
+
+ POST
+/os-floating-ips-bulk
+Create Floating Ips
+
+ PUT
+/os-floating-ips-bulk/delete
+Bulk-Delete Floating Ips
+
+ GET
+/os-floating-ips-bulk/{host_name}
+List Floating Ips By Host
+
+Floating IP DNS records (os-floating-ip-dns)
+ Warning
+
+Since these APIs are only implemented for nova-network, they are deprecated. These will fail with a 404 starting from microversion 2.36. They were removed in the 18.0.0 Rocky release.
+
+Manages DNS records associated with floating IP addresses. The API dispatches requests to a DNS driver that is selected at startup.
+
+ GET
+/os-floating-ip-dns
+List DNS Domains
+
+ PUT
+/os-floating-ip-dns/{domain}
+Create Or Update DNS Domain
+
+ DELETE
+/os-floating-ip-dns/{domain}
+Delete DNS Domain
+
+ GET
+/os-floating-ip-dns/{domain}/entries/{ip}
+List DNS Entries
+
+ GET
+/os-floating-ip-dns/{domain}/entries/{name}
+Find Unique DNS Entry
+
+ PUT
+/os-floating-ip-dns/{domain}/entries/{name}
+Create Or Update DNS Entry
+
+ DELETE
+/os-floating-ip-dns/{domain}/entries/{name}
+Delete DNS Entry
+
+Cells (os-cells, capacities)
+Adds neighbor cells, lists neighbor cells, and shows the capabilities of the local cell. By default, only administrators can manage cells.
+
+ Warning
+
+These APIs refer to a Cells v1 deployment which was deprecated in the 16.0.0 Pike release. These are not used with Cells v2 which is required beginning with the 15.0.0 Ocata release where all Nova deployments consist of at least one Cells v2 cell. They were removed in the 20.0.0 Train release.
+
+ GET
+/os-cells
+List Cells
+
+ POST
+/os-cells
+Create Cell
+
+ GET
+/os-cells/capacities
+Capacities
+
+ GET
+/os-cells/detail
+List Cells With Details
+
+ GET
+/os-cells/info
+Info For This Cell
+
+ GET
+/os-cells/{cell_id}
+Show Cell Data
+
+ PUT
+/os-cells/{cell_id}
+Update a Cell
+
+ DELETE
+/os-cells/{cell_id}
+Delete a Cell
+
+ GET
+/os-cells/{cell_id}/capacities
+Show Cell Capacities
+
+XenServer VNC Proxy (XVP) consoles (os-consoles)
+Manages server XVP consoles.
+
+ Warning
+
+These APIs are only applicable when using the XenServer virt driver. They were removed in the 21.0.0 (Ussuri) release.
+
+ GET
+/servers/{server_id}/consoles
+Lists Consoles
+
+ POST
+/servers/{server_id}/consoles
+Create Console
+
+ GET
+/servers/{server_id}/consoles/{console_id}
+Show Console Details
+
+ DELETE
+/servers/{server_id}/consoles/{console_id}
+Delete Console
+
+Rules for default security group (os-security-group-default-rules)
+ Warning
+
+This API only available with nova-network which is deprecated. It should be avoided in any new applications. These will fail with a 404 starting from microversion 2.36. They were completely removed in the 21.0.0 (Ussuri) release.
+
+Lists, shows information for, and creates default security group rules.
+
+ GET
+/os-security-group-default-rules
+List Default Security Group Rules
+
+ GET
+/os-security-group-default-rules/{security_group_default_rule_id}
+Show Default Security Group Rule Details
+
+ POST
+/os-security-group-default-rules
+Create Default Security Group Rule
+
+ DELETE
+/os-security-group-default-rules/{security_group_default_rule_id}
+Delete Default Security Group Rule
+
+Guest agents (os-agents)
+Creates, lists, updates, and deletes guest agent builds. Use guest agents to access files on the disk, configure networking, or run other applications or scripts in the guest while the agent is running. This hypervisor-specific extension is currently only for the Xen driver. Use of guest agents is possible only if the underlying service provider uses the Xen driver.
+
+ Warning
+
+These APIs only works with the Xen virt driver, which was deprecated in the 20.0.0 (Train) release. They were removed in the 22.0.0 (Victoria) release.
+
+ GET
+/os-agents
+List Agent Builds
+
+ POST
+/os-agents
+Create Agent Build
+
+ PUT
+/os-agents/{agent_build_id}
+Update Agent Build
+
+ DELETE
+/os-agents/{agent_build_id}
+Delete Agent Build
+
+ POST
+/servers/{server_id}/action
+Get RDP Console (os-getRDPConsole Action)
+
+this page last updated: 2025-05-06 13:22:44
+Creative Commons Attribution 3.0 License
+Except where otherwise noted, this document is licensed under Creative Commons Attribution 3.0 License. See all OpenStack Legal Documents.
+
+ found an error? report a bug
+nova
+Compute API
+API Versions
+List All Major Versions
+Show Details of Specific API Version
+Service URLs
+Request IDs
+Servers (servers)
+List Servers
+Create Server
+Create Multiple Servers
+List Servers Detailed
+Show Server Details
+Update Server
+Delete Server
+Servers - run an action (servers, action)
+Add (Associate) Floating Ip (addFloatingIp Action) (DEPRECATED)
+Add Security Group To A Server (addSecurityGroup Action)
+Change Administrative Password (changePassword Action)
+Confirm Resized Server (confirmResize Action)
+Create Server Back Up (createBackup Action)
+Create Image (createImage Action)
+Lock Server (lock Action)
+Pause Server (pause Action)
+Reboot Server (reboot Action)
+Rebuild Server (rebuild Action)
+Remove (Disassociate) Floating Ip (removeFloatingIp Action) (DEPRECATED)
+Remove Security Group From A Server (removeSecurityGroup Action)
+Rescue Server (rescue Action)
+Resize Server (resize Action)
+Resume Suspended Server (resume Action)
+Revert Resized Server (revertResize Action)
+Start Server (os-start Action)
+Stop Server (os-stop Action)
+Suspend Server (suspend Action)
+Unlock Server (unlock Action)
+Unpause Server (unpause Action)
+Unrescue Server (unrescue Action)
+Add (Associate) Fixed Ip (addFixedIp Action) (DEPRECATED)
+Remove (Disassociate) Fixed Ip (removeFixedIp Action) (DEPRECATED)
+Force-Delete Server (forceDelete Action)
+Restore Soft-Deleted Instance (restore Action)
+Show Console Output (os-getConsoleOutput Action)
+Shelve Server (shelve Action)
+Shelf-Offload (Remove) Server (shelveOffload Action)
+Unshelve (Restore) Shelved Server (unshelve Action)
+Trigger Crash Dump In Server
+Get Serial Console (os-getSerialConsole Action) (DEPRECATED)
+Get SPICE Console (os-getSPICEConsole Action) (DEPRECATED)
+Get VNC Console (os-getVNCConsole Action) (DEPRECATED)
+Servers - run an administrative action (servers, action)
+Inject Network Information (injectNetworkInfo Action)
+Migrate Server (migrate Action)
+Live-Migrate Server (os-migrateLive Action)
+Reset Networking On A Server (resetNetwork Action) (DEPRECATED)
+Reset Server State (os-resetState Action)
+Evacuate Server (evacuate Action)
+Server Consoles
+Create Console
+Show Console Connection Information
+Servers Security Groups (servers, os-security-groups)
+List Security Groups By Server
+Servers diagnostics (servers, diagnostics)
+Show Server Diagnostics
+Servers IPs (servers, ips)
+List Ips
+Show Ip Details
+Server metadata (servers, metadata)
+List All Metadata
+Create or Update Metadata Items
+Replace Metadata Items
+Show Metadata Item Details
+Create Or Update Metadata Item
+Delete Metadata Item
+Servers actions (servers, os-instance-actions)
+List Actions For Server
+Show Server Action Details
+Port interfaces (servers, os-interface)
+List Port Interfaces
+Create Interface
+Show Port Interface Details
+Detach Interface
+Servers password (servers, os-server-password)
+Show Server Password
+Clear Admin Password
+Servers with shares attachments (servers, shares)
+List share attachments for an instance
+Attach a share to an instance
+Show a detail of a share attachment
+Detach a share from an instance
+Servers with volume attachments (servers, os-volume_attachments)
+List volume attachments for an instance
+Attach a volume to an instance
+Show a detail of a volume attachment
+Update a volume attachment
+Detach a volume from an instance
+Flavors
+List Flavors
+Create Flavor
+List Flavors With Details
+Show Flavor Details
+Update Flavor Description
+Delete Flavor
+Flavors access (flavors, os-flavor-access)
+List Flavor Access Information For Given Flavor
+Add Flavor Access To Tenant (addTenantAccess Action)
+Remove Flavor Access From Tenant (removeTenantAccess Action)
+Flavors extra-specs (flavors, os-flavor-extra-specs)
+List Extra Specs For A Flavor
+Create Extra Specs For A Flavor
+Show An Extra Spec For A Flavor
+Update An Extra Spec For A Flavor
+Delete An Extra Spec For A Flavor
+Keypairs (keypairs)
+List Keypairs
+Import (or create) Keypair
+Show Keypair Details
+Delete Keypair
+Limits (limits)
+Show Rate And Absolute Limits
+Host aggregates (os-aggregates)
+List Aggregates
+Create Aggregate
+Show Aggregate Details
+Update Aggregate
+Delete Aggregate
+Add Host
+Remove Host
+Create Or Update Aggregate Metadata
+Request Image Pre-caching for Aggregate
+Assisted volume snapshots (os-assisted-volume-snapshots)
+Create Assisted Volume Snapshots
+Delete Assisted Volume Snapshot
+Availability zones (os-availability-zone)
+Get Availability Zone Information
+Get Detailed Availability Zone Information
+Hypervisors (os-hypervisors)
+List Hypervisors
+List Hypervisors Details
+Show Hypervisor Statistics (DEPRECATED)
+Show Hypervisor Details
+Show Hypervisor Uptime (DEPRECATED)
+Search Hypervisor (DEPRECATED)
+List Hypervisor Servers (DEPRECATED)
+Server usage audit log (os-instance-usage-audit-log)
+List Server Usage Audits
+List Usage Audits Before Specified Time
+Migrations (os-migrations)
+List Migrations
+Server migrations (servers, migrations)
+List Migrations
+Show Migration Details
+Force Migration Complete Action (force_complete Action)
+Delete (Abort) Migration
+Quota sets (os-quota-sets)
+Show A Quota
+Update Quotas
+Revert Quotas To Defaults
+List Default Quotas For Tenant
+Show The Detail of Quota
+Quota class sets (os-quota-class-sets)
+Show the quota for Quota Class
+Create or Update Quotas for Quota Class
+Server groups (os-server-groups)
+List Server Groups
+Create Server Group
+Show Server Group Details
+Delete Server Group
+Server tags (servers, tags)
+List Tags
+Replace Tags
+Delete All Tags
+Check Tag Existence
+Add a Single Tag
+Delete a Single Tag
+Compute services (os-services)
+List Compute Services
+Disable Scheduling For A Compute Service
+Disable Scheduling For A Compute Service and Log Disabled Reason
+Enable Scheduling For A Compute Service
+Update Forced Down
+Update Compute Service
+Delete Compute Service
+Usage reports (os-simple-tenant-usage)
+List Tenant Usage Statistics For All Tenants
+Show Usage Statistics For Tenant
+Create external events (os-server-external-events)
+Run Events
+Servers Topology (servers, topology)
+Show Server Topology
+Internal Service APIs
+Assisted volume snapshots (os-assisted-volume-snapshots)
+Create Assisted Volume Snapshots
+Delete Assisted Volume Snapshot
+Update (“swapping”) Server volume attachments (servers, os-volume_attachments)
+Update(swapping) a volume attachment
+Create external events (os-server-external-events)
+Run Events
+Deprecated APIs
+Extensions (extensions) (DEPRECATED)
+List Extensions
+Show Extension Details
+Networks (os-networks) (DEPRECATED)
+List Networks
+Create Network
+Add Network
+Show Network Details
+Delete Network
+Associate Host
+Disassociate Network
+Disassociate Host
+Disassociate Project
+Volume extension (os-volumes, os-snapshots) (DEPRECATED)
+List Volumes
+Create Volume
+List Volumes With Details
+Show Volume Details
+Delete Volume
+List Snapshots
+Create Snapshot
+List Snapshots With Details
+Show Snapshot Details
+Delete Snapshot
+Images (DEPRECATED)
+List Images
+List Images With Details
+Show Image Details
+Delete Image
+List Image Metadata
+Create Image Metadata
+Update Image Metadata
+Show Image Metadata Item
+Create Or Update Image Metadata Item
+Delete Image Metadata Item
+Bare metal nodes (os-baremetal-nodes) (DEPRECATED)
+List Bare Metal Nodes
+Show Bare Metal Node Details
+Project networks (os-tenant-networks) (DEPRECATED)
+List Project Networks
+Create Project Network
+Show Project Network Details
+Delete Project Network
+Floating IP pools (os-floating-ip-pools) (DEPRECATED)
+List Floating Ip Pools
+Floating IPs (os-floating-ips) (DEPRECATED)
+List Floating Ip Addresses
+Create (Allocate) Floating Ip Address
+Show Floating Ip Address Details
+Delete (Deallocate) Floating Ip Address
+Security groups (os-security-groups) (DEPRECATED)
+List Security Groups
+Create Security Group
+Show Security Group Details
+Update Security Group
+Delete Security Group
+Rules for security group (os-security-group-rules) (DEPRECATED)
+Create Security Group Rule
+Delete Security Group Rule
+Hosts (os-hosts) (DEPRECATED)
+List Hosts
+Show Host Details
+Update Host status
+Reboot Host
+Shut Down Host
+Start Host
+Obsolete APIs
+Root certificates (os-certificates)
+Create Root Certificate
+Show Root Certificate Details
+Cloudpipe (os-cloudpipe)
+List Cloudpipes
+Create Cloudpipe
+Update Cloudpipe
+Ping instances (os-fping)
+Ping Instances
+Ping An Instance
+Servers virtual interfaces (servers, os-virtual-interfaces)
+List Virtual Interfaces
+Fixed IPs (os-fixed-ips)
+Show Fixed Ip Details
+Reserve Or Release A Fixed Ip
+Floating IPs bulk (os-floating-ips-bulk)
+List Floating Ips
+Create Floating Ips
+Bulk-Delete Floating Ips
+List Floating Ips By Host
+Floating IP DNS records (os-floating-ip-dns)
+List DNS Domains
+Create Or Update DNS Domain
+Delete DNS Domain
+List DNS Entries
+Find Unique DNS Entry
+Create Or Update DNS Entry
+Delete DNS Entry
+Cells (os-cells, capacities)
+List Cells
+Create Cell
+Capacities
+List Cells With Details
+Info For This Cell
+Show Cell Data
+Update a Cell
+Delete a Cell
+Show Cell Capacities
+XenServer VNC Proxy (XVP) consoles (os-consoles)
+Lists Consoles
+Create Console
+Show Console Details
+Delete Console
+Rules for default security group (os-security-group-default-rules)
+List Default Security Group Rules
+Show Default Security Group Rule Details
+Create Default Security Group Rule
+Delete Default Security Group Rule
+Guest agents (os-agents)
+List Agent Builds
+Create Agent Build
+Update Agent Build
+Delete Agent Build
+Get RDP Console (os-getRDPConsole Action)
+OpenStack
+Projects
+OpenStack Security
+Blog
+News
+Community
+User Groups
+Events
+Jobs
+Companies
+Contribute
+Documentation
+OpenStack Manuals
+Getting Started
+API Documentation
+Wiki
+Branding & Legal
+Legal Docs
+Logos & Guidelines
+Trademark Policy
+Privacy Policy
+OpenInfra CLA
+Stay In Touch
+   
+The OpenStack project is provided under the Apache 2.0 license. Docs.openstack.org is powered by Rackspace Cloud Computing.
