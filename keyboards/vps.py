@@ -1,31 +1,49 @@
+import re
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Dict, Any
+
+# Localization map for raw network names into beautiful geographic data centers
+LOCATION_MAP = {
+    "Internet-01": "🇫🇷 France (FR-1) / فرانسه",
+    "Internet-02": "🇩🇪 Germany (DE-1) / آلمان",
+    "Internet-12": "🇩🇪 Germany (DE-2) / آلمان",
+    "Internet-03": "🇳🇱 Netherlands (NL-1) / هلند",
+    "Internet-22": "🇳🇱 Netherlands (NL-2) / هلند",
+    "Internet-04": "🇺🇸 USA (US-1) / آمریکا",
+    "Internet-05": "🇬🇧 United Kingdom (UK-1) / انگلستان",
+    "Internet-06": "🇸🇬 Singapore (SG-1) / سنگاپور",
+}
 
 
 def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     """
     Builds an inline keyboard representing available network locations.
-    Filters out networks with 'RESERVE' or 'NOTWORKING' in their names, and sorts alphabetically.
+    - Filters out networks with 'RESERVE', 'NOTWORKING', or 'IPv6-only' in their names.
+    - Uses LOCATION_MAP to display beautiful user-friendly names.
+    - Sorts alphabetically.
     """
     builder = InlineKeyboardBuilder()
 
     filtered_networks = []
     for net in networks:
-        name = net.get("Name", net.get("name", "Unknown Network"))
+        raw_name = net.get("Name", net.get("name", "Unknown Network"))
         net_id = net.get("ID", net.get("id", ""))
 
-        # Check for reservation or non-functional keywords
-        upper_name = name.upper()
-        if "RESERVE" in upper_name or "NOTWORKING" in upper_name:
+        # Check for reservation, broken or IPv6-only keywords
+        upper_name = raw_name.upper()
+        if "RESERVE" in upper_name or "NOTWORKING" in upper_name or "IPV6" in upper_name:
             continue
-        filtered_networks.append((name, net_id))
 
-    # Sort alphabetically by network name
+        # Resolve geographic localization name or default to raw name
+        display_name = LOCATION_MAP.get(raw_name, f"🌐 {raw_name}")
+        filtered_networks.append((display_name, net_id))
+
+    # Sort alphabetically by network display name
     filtered_networks.sort(key=lambda x: x[0].lower())
 
-    for name, net_id in filtered_networks:
-        builder.button(text=f"🌐 {name}", callback_data=f"buy_net:{net_id}")
+    for display_name, net_id in filtered_networks:
+        builder.button(text=display_name, callback_data=f"buy_net:{net_id}")
 
     builder.button(text="❌ Cancel", callback_data="buy_cancel")
     builder.adjust(1)
@@ -35,17 +53,36 @@ def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarku
 def get_flavors_keyboard(flavors: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     """
     Builds an inline keyboard representing available virtual server plans/flavors.
+    - Sorts flavors numerically by RAM capacity (from small to large).
     """
     builder = InlineKeyboardBuilder()
-    # Sort flavors by memory/vcpus for organized presentation
-    for flv in flavors[:10]:  # limit display count for tidy Telegram rendering
+
+    sorted_flavors = []
+    for flv in flavors:
         name = flv.get("Name", flv.get("name", "Flavor"))
         flv_id = flv.get("ID", flv.get("id", ""))
-        ram = flv.get("RAM", "")
+
+        # Try to extract ram numerical value for sorting
+        ram_val = flv.get("RAM", 0)
+        try:
+            ram_val = int(ram_val)
+        except (ValueError, TypeError):
+            # Parse ram from name if possible (e.g. vds.1c.1g)
+            match = re.search(r"(\d+)\s*[gG]", name)
+            if match:
+                ram_val = int(match.group(1)) * 1024
+            else:
+                ram_val = 0
+
         vcpus = flv.get("VCPUs", "")
         disk = flv.get("Disk", "")
+        sorted_flavors.append((ram_val, flv_id, name, vcpus, disk))
 
-        btn_text = f"⚙️ {name} ({ram}MB RAM, {vcpus} vCPU, {disk}G Disk)"
+    # Sort flavors from smallest RAM to largest
+    sorted_flavors.sort(key=lambda x: x[0])
+
+    for ram, flv_id, name, vcpus, disk in sorted_flavors[:12]:  # display reasonable count
+        btn_text = f"⚙️ {name} ({ram if ram > 0 else 'N/A'}MB RAM, {vcpus} vCPU, {disk}G Disk)"
         builder.button(text=btn_text, callback_data=f"buy_flv:{flv_id}")
 
     builder.button(text="🔙 Back", callback_data="buy_back_net")
@@ -54,18 +91,56 @@ def get_flavors_keyboard(flavors: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def beautify_image_name(name: str) -> str:
+    """
+    Cleans and structures raw OpenStack image names into sleek presentation names.
+    - Removes '-amd64' or '.raw' suffixes.
+    - Prefixes standard platforms with corresponding cute emojis.
+    """
+    clean_name = name.replace("-amd64", "").replace(".raw", "").replace("_", " ").strip()
+
+    lower_name = clean_name.lower()
+    if "ubuntu" in lower_name:
+        if "3x-ui" in lower_name or "3xui" in lower_name:
+            return f"⚡️ 3x-ui (Ubuntu {clean_name.replace('ubuntu', '').strip()})"
+        return f"🐧 Ubuntu {clean_name.replace('ubuntu', '').strip()}"
+    elif "debian" in lower_name:
+        return f"🌀 Debian {clean_name.replace('debian', '').strip()}"
+    elif "centos" in lower_name:
+        return f"🎯 CentOS {clean_name.replace('centos', '').strip()}"
+    elif "windows" in lower_name:
+        return f"🪟 Windows {clean_name.replace('windows', '').strip()}"
+    elif "prebuilt" in lower_name:
+        return f"🚀 {clean_name}"
+
+    return f"💿 {clean_name}"
+
+
 def get_images_keyboard(images: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     """
     Builds an inline keyboard representing available operating system images.
+    - Excludes images starting with 'OLD_'.
+    - Excludes inactive images.
+    - Beautifies operating system names (removes '-amd64' etc.).
     """
     builder = InlineKeyboardBuilder()
+
     for img in images:
         name = img.get("Name", img.get("name", "OS Image"))
         img_id = img.get("ID", img.get("id", ""))
-        # Only show active images for cleaner UX
         status = img.get("Status", img.get("status", "active")).lower()
-        if status == "active":
-            builder.button(text=f"💿 {name}", callback_data=f"buy_img:{img_id}")
+
+        # Check active status
+        if status != "active":
+            continue
+
+        # Exclude legacy OLD_ prefix images
+        if name.upper().startswith("OLD_"):
+            continue
+
+        # Beautify display OS names
+        display_name = beautify_image_name(name)
+        builder.button(text=display_name, callback_data=f"buy_img:{img_id}")
 
     builder.button(text="🔙 Back", callback_data="buy_back_flv")
     builder.button(text="❌ Cancel", callback_data="buy_cancel")
