@@ -2,25 +2,16 @@ import re
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Dict, Any
+from services.openstack import OpenStackService
 
-# Localization map for raw network names into beautiful geographic data centers
-LOCATION_MAP = {
-    "Internet-01": "🇫🇷 France (FR-1) / فرانسه",
-    "Internet-02": "🇩🇪 Germany (DE-1) / آلمان",
-    "Internet-12": "🇩🇪 Germany (DE-2) / آلمان",
-    "Internet-03": "🇳🇱 Netherlands (NL-1) / هلند",
-    "Internet-22": "🇳🇱 Netherlands (NL-2) / هلند",
-    "Internet-04": "🇺🇸 USA (US-1) / آمریکا",
-    "Internet-05": "🇬🇧 United Kingdom (UK-1) / انگلستان",
-    "Internet-06": "🇸🇬 Singapore (SG-1) / سنگاپور",
-}
+openstack = OpenStackService()
 
 
-def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
+async def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
     """
     Builds an inline keyboard representing available network locations.
     - Filters out networks with 'RESERVE', 'NOTWORKING', or 'IPv6-only' in their names.
-    - Uses LOCATION_MAP to display beautiful user-friendly names.
+    - Resolves network names automatically using OpenStack's subnets and GeoIP API.
     - Sorts alphabetically.
     """
     builder = InlineKeyboardBuilder()
@@ -35,8 +26,8 @@ def get_networks_keyboard(networks: List[Dict[str, Any]]) -> InlineKeyboardMarku
         if "RESERVE" in upper_name or "NOTWORKING" in upper_name or "IPV6" in upper_name:
             continue
 
-        # Resolve geographic localization name or default to raw name
-        display_name = LOCATION_MAP.get(raw_name, f"🌐 {raw_name}")
+        # Resolve network geographic name asynchronously
+        display_name = await openstack.resolve_network_geoip(net_id, raw_name)
         filtered_networks.append((display_name, net_id))
 
     # Sort alphabetically by network display name

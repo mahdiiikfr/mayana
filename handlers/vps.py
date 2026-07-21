@@ -241,7 +241,7 @@ async def start_buy_vps(message: Message, db: DatabaseManager, state: FSMContext
 
         await state.set_state(BuyVPSState.select_location)
         msg_text = "لطفاً لوکیشن/شبکه مورد نظر برای سرور جدید را انتخاب کنید:" if locale == "fa" else "Please select the desired network location for your server:"
-        await message.answer(text=msg_text, reply_markup=get_networks_keyboard(networks))
+        await message.answer(text=msg_text, reply_markup=await get_networks_keyboard(networks))
     except Exception as e:
         logger.exception(f"Failed to query networks: {e}")
         await message.answer("خطا در واکشی لوکیشن‌های ابری. لطفاً دوباره تلاش کنید." if locale == "fa" else "Error fetching cloud locations. Please try again.")
@@ -442,7 +442,7 @@ async def process_back_net(callback: CallbackQuery, state: FSMContext, locale: s
     try:
         networks = await openstack.get_networks()
         msg_text = "لطفاً لوکیشن/شبکه مورد نظر برای سرور جدید را انتخاب کنید:" if locale == "fa" else "Please select the desired network location for your server:"
-        await callback.message.edit_text(text=msg_text, reply_markup=get_networks_keyboard(networks))
+        await callback.message.edit_text(text=msg_text, reply_markup=await get_networks_keyboard(networks))
     except Exception:
         await callback.message.edit_text("خطا در بارگذاری مجدد لوکیشن‌ها.")
         await state.clear()
